@@ -511,7 +511,9 @@ dependencies = [
  "bevy",
  "bevy_app",
  "bevy_bae_macros",
+ "bevy_derive",
  "bevy_ecs",
+ "bevy_reflect",
  "log",
  "variadics_please",
 ]

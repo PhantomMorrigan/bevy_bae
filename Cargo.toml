@@ -14,8 +14,10 @@ categories = ["game-development"]
 include = ["/src", "/license*"]
 
 [dependencies]
-bevy_ecs = { version = "0.17", default-features = false }
+bevy_ecs = { version = "0.17", default-features = false, features = ["bevy_reflect"] }
 bevy_app = { version = "0.17", default-features = false }
+bevy_reflect = { version = "0.17", default-features = false }
+bevy_derive = { version = "0.17", default-features = false }
 bevy_bae_macros = { version = "0.0.1", path = "macros" }
 log = "0.4" # Directly depend on `log` like other `no_std` Bevy crates, since `bevy_log` currently requires `std`.
 variadics_please = "1"
