@@ -1,0 +1,20 @@
+[package]
+name = "bevy_bae_macros"
+version = "0.0.1"
+authors = ["Jan Hohenheim <jan@hohenheim.ch>"]
+edition = "2024"
+description = "macros used by bevy_bae"
+readme = "../readme.md"
+repository = "https://github.com/janhohenheim/bevy_bae"
+keywords = ["bevy", "ai", "htn", "macros"]
+categories = ["game-development"]
+license = "MIT OR Apache-2.0"
+include = ["/src", "../license*"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
