@@ -11,7 +11,7 @@ fn trunk_thumper_domain() -> impl Bundle {
                 (
                     Name::new("Beat up enemy"),
                     conditions![
-                        Condition::equals("can_see_enemy", true),
+                        (Condition::eq("can_see_enemy", true), Name::new("Can see enemy"))
                     ],
                     Sequence,
                     tasks!(Sequence[
@@ -19,7 +19,7 @@ fn trunk_thumper_domain() -> impl Bundle {
                             Name::new("Navigate to enemy"),
                             TaskSystem::new(navigate_to_enemy),
                             effects![
-                                Effect::set("location", "enemy"),
+                               (Effect::set("location", "enemy"), Name::new("Set location to enemy position"))
                             ],
                         ),
                         (
@@ -30,7 +30,7 @@ fn trunk_thumper_domain() -> impl Bundle {
                 ),
                 (
                     Name::new("Patrol bridges"),
-                    conditions![Condition::always_true()],
+                    conditions![(Condition::always_true(), Name::new("Always true"))],
                     Sequence,
                     tasks!(Sequence[
                         (
@@ -40,7 +40,7 @@ fn trunk_thumper_domain() -> impl Bundle {
                         (
                             Name::new("Go to bridge"),
                             TaskSystem::new(navigate_to_bridge),
-                            effects![Effect::set("location", "bridge")],
+                            effects![(Effect::set("location", "bridge"), Name::new("Set location to bridge"))],
                         ),
                         (
                             Name::new("Check if anything is out of the ordinary"),

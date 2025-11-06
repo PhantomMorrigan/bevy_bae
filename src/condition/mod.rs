@@ -21,34 +21,40 @@ impl Condition {
     }
 
     pub fn eq(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a == b)
+        Self::predicate(name, value, |a, b| a.eq(b))
     }
 
-    pub fn neq(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a != b)
+    pub fn ne(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
+        Self::predicate(name, value, |a, b| a.ne(b))
     }
 
     pub fn gt(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a > b)
+        Self::predicate(name, value, |a, b| a.num() > b.num())
     }
 
     pub fn gte(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a >= b)
+        Self::predicate(name, value, |a, b| a.num() >= b.num())
     }
 
     pub fn lt(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a < b)
+        Self::predicate(name, value, |a, b| a.num() < b.num())
     }
 
     pub fn lte(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a <= b)
+        Self::predicate(name, value, |a, b| a.num() <= b.num())
     }
 
-    pub fn in_range<T: PartialOrd + Into<Value>>(
+    pub fn in_range(
         name: impl Into<Ustr>,
-        range: impl RangeBounds<T>,
+        range: impl RangeBounds<f32> + Send + Sync + 'static,
     ) -> Self {
-        Self::new(|props| range.contains(props.get_value(name).num()))
+        let name = name.into();
+        Self::new(move |props| {
+            let Some(prop) = props.get_value(name) else {
+                return false;
+            };
+            range.contains(&prop.num())
+        })
     }
 
     pub fn always_true() -> Self {
@@ -62,11 +68,16 @@ impl Condition {
     pub fn predicate(
         name: impl Into<Ustr>,
         value: impl Into<Value>,
-        predicate: impl Fn(Option<Value>, Option<Value>) -> bool + Send + Sync + 'static,
+        predicate: impl Fn(Value, Value) -> bool + Send + Sync + 'static,
     ) -> Self {
         let name = name.into();
         let value = value.into();
-        Self::new(move |props| predicate(props.get_value(name), Some(value)))
+        Self::new(move |props| {
+            let Some(prop) = props.get_value(name) else {
+                return false;
+            };
+            predicate(prop, value)
+        })
     }
 
     fn true_pred() -> Box<dyn Fn(&Props) -> bool + Send + Sync + 'static> {

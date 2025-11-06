@@ -3,7 +3,8 @@ pub mod prelude {
         condition::{
             Condition,
             relationship::{
-                ConditionOf, ConditionSpawner, ConditionSpawnerCommands, Conditions, conditions,
+                ConditionOf, ConditionSpawner, ConditionSpawnerCommands, Conditions,
+                IntoConditionBundle, conditions,
             },
         },
         effect::{
@@ -25,7 +26,8 @@ pub mod prelude {
     };
     pub use bevy_mod_props::{self, Props, Value};
     pub(crate) use {
-        bevy_app::prelude::*, bevy_derive::Deref, bevy_ecs::prelude::*, bevy_reflect::prelude::*,
+        crate::value_ext::ValueExt as _, bevy_app::prelude::*, bevy_derive::Deref,
+        bevy_ecs::prelude::*, bevy_reflect::prelude::*,
     };
 }
 extern crate alloc;
@@ -35,6 +37,7 @@ use crate::prelude::*;
 pub mod condition;
 pub mod effect;
 pub mod task;
+mod value_ext;
 
 pub struct BaePlugin;
 impl Plugin for BaePlugin {

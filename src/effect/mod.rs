@@ -27,44 +27,52 @@ impl Effect {
     pub fn toggle(name: impl Into<Ustr>) -> Self {
         let name = name.into();
 
-        Self::new(move |props| props.set(name, !props[name].bool()))
+        Self::new(move |props| props.set(name, !props.get_value(name).unwrap().bool()))
     }
 
     pub fn inc<T: Into<Value> + Default>(
         name: impl Into<Ustr>,
         value: impl Into<Value> + Default,
     ) -> Self {
-        Self::mutate(name, value, |a, b| a += b)
+        Self::mutate(name, value, |a, b| Value::Num(a.num() + b.num()))
     }
 
-    pub fn dec<T>(name: impl Into<Ustr>, value: impl Into<Value> + Default) -> Self {
-        Self::mutate(name, value, |a, b| a -= b)
+    pub fn dec<T: Into<Value> + Default>(
+        name: impl Into<Ustr>,
+        value: impl Into<Value> + Default,
+    ) -> Self {
+        Self::mutate(name, value, |a, b| Value::Num(a.num() - b.num()))
     }
 
     pub fn mul(name: impl Into<Ustr>, value: impl Into<Value> + Default) -> Self {
-        Self::mutate(name, value, |a, b| a *= b)
+        Self::mutate(name, value, |a, b| Value::Num(a.num() * b.num()))
     }
 
     pub fn div(name: impl Into<Ustr>, value: impl Into<Value> + Default) -> Self {
-        Self::mutate(name, value, |a, b| a /= b)
+        Self::mutate(name, value, |a, b| Value::Num(a.num() / b.num()))
     }
 
     pub fn pow(name: impl Into<Ustr>, value: impl Into<Value> + Default) -> Self {
-        Self::mutate(name, value, |a, b| *a = a.pow(b))
+        Self::mutate(name, value, |a, b| Value::Num(a.num().powf(b.num())))
     }
 
     pub fn rem(name: impl Into<Ustr>, value: impl Into<Value> + Default) -> Self {
-        Self::mutate(name, value, |a, b| a %= b)
+        Self::mutate(name, value, |a, b| Value::Num(a.num() % b.num()))
     }
 
-    pub fn mutate(
+    pub fn mutate<T: Into<Value> + Default>(
         name: impl Into<Ustr>,
-        value: impl Into<Value> + Default,
-        mutate: impl Fn(&mut Value, Value) -> bool + 'static,
+        value: T,
+        mutate: impl Fn(Value, Value) -> Value + Send + Sync + 'static,
     ) -> Self {
         let name = name.into();
         let value = value.into();
-        Self::new(move |props| mutate(props.entry(name).or_insert(Default::default), value))
+        Self::new(move |props| {
+            if props.get_value(name).is_none() {
+                props.set(name, T::default())
+            };
+            props.set(name, mutate(props.get_value(name).unwrap(), value));
+        })
     }
 
     fn noop() -> Box<dyn FnMut(&mut Props) + Send + Sync + 'static> {
