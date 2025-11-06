@@ -6,7 +6,7 @@ use crate::prelude::*;
 #[derive(Component)]
 #[component(on_insert = Self::on_insert_hook, on_replace = Self::on_replace_hook)]
 pub struct TaskSystem {
-    system:
+    register_system:
         Option<Box<dyn FnOnce(&mut Commands) -> SystemId<In<Entity>, TaskStatus> + Send + Sync>>,
     system_id: Option<SystemId<In<Entity>, TaskStatus>>,
 }
@@ -20,7 +20,7 @@ impl TaskSystem {
         let system = IntoSystem::into_system(system);
         Self {
             system_id: None,
-            system: Some(Box::new(move |commands| commands.register_system(system))),
+            register_system: Some(Box::new(move |commands| commands.register_system(system))),
         }
     }
 
@@ -29,23 +29,23 @@ impl TaskSystem {
     }
 
     fn on_insert_hook(mut world: DeferredWorld, context: HookContext) {
-        let Some(tt) = world
+        let Some(register_system) = world
             .get_mut::<Self>(context.entity)
-            .and_then(|mut tt| tt.system.take())
+            .and_then(|mut task_system| task_system.register_system.take())
         else {
             return;
         };
-        let id = tt(&mut world.commands());
-        world.get_mut::<Self>(context.entity).unwrap().system_id = Some(id);
+        let system_id = register_system(&mut world.commands());
+        world.get_mut::<Self>(context.entity).unwrap().system_id = Some(system_id);
     }
 
     fn on_replace_hook(mut world: DeferredWorld, context: HookContext) {
-        let Some(tt) = world
+        let Some(system_id) = world
             .get::<Self>(context.entity)
             .and_then(|tt| tt.system_id)
         else {
             return;
         };
-        world.commands().unregister_system(tt);
+        world.commands().unregister_system(system_id);
     }
 }
