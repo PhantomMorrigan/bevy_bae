@@ -2,6 +2,7 @@ pub mod prelude {
     pub use crate::{
         condition::{
             Condition,
+            builtin::FuncCondition,
             relationship::{
                 ConditionOf, ConditionSpawner, ConditionSpawnerCommands, Conditions,
                 IntoConditionBundle, conditions,
@@ -15,13 +16,20 @@ pub mod prelude {
         },
         task::{
             TaskStatus,
-            compound::{select::Select, sequence::Sequence},
-            relationship::{TaskOf, TaskSpawner, TaskSpawnerCommands, Tasks, tasks},
-            step::{ExecuteStep, Step},
+            compound::{
+                CompoundTask,
+                relationship::{TaskOf, TaskSpawner, TaskSpawnerCommands, Tasks, tasks},
+                select::Select,
+                sequence::Sequence,
+            },
+            primitive::{ExecuteStep, Step},
         },
     };
     pub(crate) use {
-        bevy_app::prelude::*, bevy_derive::Deref, bevy_ecs::prelude::*, bevy_reflect::prelude::*,
+        bevy_app::prelude::*,
+        bevy_derive::{Deref, DerefMut},
+        bevy_ecs::prelude::*,
+        bevy_reflect::prelude::*,
     };
 }
 extern crate alloc;

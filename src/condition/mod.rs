@@ -1,7 +1,10 @@
+use bevy_ecs::world::DeferredWorld;
+
 use crate::prelude::*;
 
+pub mod builtin;
 pub mod relationship;
 
-#[derive(Component, Reflect, Debug, PartialEq, Clone, Copy)]
-#[reflect(Component)]
-pub struct Condition;
+pub trait Condition: Component {
+    fn is_satisfied(&mut self, world: EntityWorldMut) -> bool;
+}

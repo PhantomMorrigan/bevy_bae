@@ -1,6 +1,5 @@
 pub mod compound;
-pub mod relationship;
-pub mod step;
+pub mod primitive;
 
 pub enum TaskStatus {
     Continue,
