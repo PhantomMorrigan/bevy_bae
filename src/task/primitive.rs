@@ -1,65 +1,51 @@
 use bevy_ecs::system::SystemId;
 use bevy_ecs::{lifecycle::HookContext, world::DeferredWorld};
-use core::marker::PhantomData;
 
 use crate::prelude::*;
 
 #[derive(Component)]
-pub struct RegisteredTaskSystem {
-    pub system_id: SystemId<In<Entity>, TaskStatus>,
+#[component(on_insert = Self::on_insert_hook, on_replace = Self::on_replace_hook)]
+pub struct TaskSystem {
+    system:
+        Option<Box<dyn FnOnce(&mut Commands) -> SystemId<In<Entity>, TaskStatus> + Send + Sync>>,
+    system_id: Option<SystemId<In<Entity>, TaskStatus>>,
 }
 
-#[derive(Component)]
-#[component(on_add = TaskSystem::<S, M>::queue_into_step)]
-pub struct TaskSystem<S: System<In = In<Entity>, Out = TaskStatus>, M: Send + Sync + 'static> {
-    system: Option<S>,
-    marker: PhantomData<M>,
-}
-
-impl<S: System<In = In<Entity>, Out = TaskStatus>, M: Send + Sync + 'static> TaskSystem<S, M> {
-    pub fn new<I>(system: I) -> Self
+impl TaskSystem {
+    pub fn new<S, M>(system: S) -> Self
     where
-        I: IntoSystem<In<Entity>, TaskStatus, M, System = S>,
+        S: IntoSystem<In<Entity>, TaskStatus, M>,
+        S::System: Send + Sync + 'static,
     {
+        let system = IntoSystem::into_system(system);
         Self {
-            system: Some(IntoSystem::into_system(system)),
-            marker: PhantomData,
+            system_id: None,
+            system: Some(Box::new(move |commands| commands.register_system(system))),
         }
     }
 
-    fn queue_into_step(mut world: DeferredWorld, ctx: HookContext) {
-        let entity = ctx.entity;
-        world.commands().queue(move |world: &mut World| -> Result {
-            if world.get_entity(entity).is_err() {
-                // Already despawned
-                return Ok(());
-            }
-            let system = {
-                let mut entity_world = world.entity_mut(entity);
-                let Some(mut func_step) = entity_world.get_mut::<TaskSystem<S, M>>() else {
-                    // Already removed
-                    return Ok(());
-                };
-                func_step.system.take().unwrap()
-            };
-            let system_id = world.register_system(system);
-            world
-                .entity_mut(entity)
-                .insert(RegisteredTaskSystem { system_id })
-                .remove::<TaskSystem<S, M>>();
-
-            Ok(())
-        });
+    pub(crate) fn system_id(&self) -> SystemId<In<Entity>, TaskStatus> {
+        self.system_id.unwrap()
     }
-}
 
-impl<S: System<In = In<Entity>, Out = TaskStatus> + Clone, M: Send + Sync + 'static + Clone> Clone
-    for TaskSystem<S, M>
-{
-    fn clone(&self) -> Self {
-        Self {
-            system: self.system.clone(),
-            marker: PhantomData,
-        }
+    fn on_insert_hook(mut world: DeferredWorld, context: HookContext) {
+        let Some(tt) = world
+            .get_mut::<Self>(context.entity)
+            .and_then(|mut tt| tt.system.take())
+        else {
+            return;
+        };
+        let id = tt(&mut world.commands());
+        world.get_mut::<Self>(context.entity).unwrap().system_id = Some(id);
+    }
+
+    fn on_replace_hook(mut world: DeferredWorld, context: HookContext) {
+        let Some(tt) = world
+            .get::<Self>(context.entity)
+            .and_then(|tt| tt.system_id)
+        else {
+            return;
+        };
+        world.commands().unregister_system(tt);
     }
 }
