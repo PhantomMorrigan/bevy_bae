@@ -1,3 +1,5 @@
+use core::fmt::Debug;
+
 use bevy_ecs::system::SystemId;
 use bevy_ecs::{lifecycle::HookContext, world::DeferredWorld};
 
@@ -50,5 +52,14 @@ impl TaskSystem {
             return;
         };
         world.commands().unregister_system(system_id);
+    }
+}
+
+impl Debug for TaskSystem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TaskSystem")
+            .field("register_system", &"<callback>")
+            .field("system_id", &self.system_id)
+            .finish()
     }
 }

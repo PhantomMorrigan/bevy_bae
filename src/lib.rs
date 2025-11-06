@@ -32,6 +32,8 @@ pub mod prelude {
 }
 extern crate alloc;
 
+use bevy_ecs::{intern::Interned, schedule::ScheduleLabel};
+
 use crate::prelude::*;
 
 pub mod condition;
@@ -39,7 +41,24 @@ pub mod effect;
 pub mod task;
 mod value_ext;
 
-pub struct BaePlugin;
+pub struct BaePlugin {
+    schedule: Interned<dyn ScheduleLabel>,
+}
+
+impl Default for BaePlugin {
+    fn default() -> Self {
+        Self {
+            schedule: FixedUpdate.intern(),
+        }
+    }
+}
 impl Plugin for BaePlugin {
-    fn build(&self, _app: &mut App) {}
+    fn build(&self, app: &mut App) {
+        app.configure_sets(self.schedule, (BaeSystems::RunTaskSystems,).chain());
+    }
+}
+
+#[derive(SystemSet, Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub enum BaeSystems {
+    RunTaskSystems,
 }

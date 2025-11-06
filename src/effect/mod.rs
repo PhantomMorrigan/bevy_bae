@@ -1,6 +1,6 @@
-use ustr::Ustr;
-
 use crate::prelude::*;
+use core::fmt::Debug;
+use ustr::Ustr;
 
 pub mod relationship;
 
@@ -81,5 +81,13 @@ impl Effect {
 
     fn noop() -> Box<dyn Fn(&mut Props) + Send + Sync + 'static> {
         Box::new(|_| {})
+    }
+}
+
+impl Debug for Effect {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Effect")
+            .field("effect", &"<callback>")
+            .finish()
     }
 }

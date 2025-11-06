@@ -1,3 +1,4 @@
+use core::fmt::Debug;
 use std::ops::RangeBounds;
 
 use ustr::Ustr;
@@ -86,5 +87,13 @@ impl Condition {
 
     fn true_pred() -> Box<dyn Fn(&Props) -> bool + Send + Sync + 'static> {
         Box::new(|_| true)
+    }
+}
+
+impl Debug for Condition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Condition")
+            .field("predicate", &"<callback>")
+            .finish()
     }
 }
