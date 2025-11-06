@@ -40,19 +40,19 @@ pub trait IntoConditionBundle {
     fn into_condition_bundle(self) -> impl Bundle;
 }
 
-impl<B: Condition> IntoConditionBundle for B {
+impl<B: IntoCondition> IntoConditionBundle for B {
     fn into_condition_bundle(self) -> impl Bundle {
-        self
+        self.into_condition()
     }
 }
 
 macro_rules! impl_into_binding_bundle {
     ($($C:ident),*) => {
-        impl<B: Condition, $($C: Bundle,)*> IntoConditionBundle for (B, $($C),*) {
+        impl<B: IntoCondition, $($C: Bundle,)*> IntoConditionBundle for (B, $($C),*) {
             #[allow(non_snake_case, reason = "tuple unpack")]
             fn into_condition_bundle(self) -> impl Bundle {
                 let (b, $($C),* ) = self;
-                (b, $($C),*)
+                (b.into_condition(), $($C),*)
             }
         }
     }

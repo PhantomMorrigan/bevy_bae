@@ -11,7 +11,7 @@ fn trunk_thumper_domain() -> impl Bundle {
                 (
                     Name::new("Beat up enemy"),
                     conditions![(
-                        FuncCondition::new(|In(entity): In<Entity>, names: Query<NameOrEntity>| -> bool {
+                        Condition::new(|In(entity): In<Entity>, names: Query<NameOrEntity>| -> bool {
                             true
                         }),
                     )],

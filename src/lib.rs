@@ -1,8 +1,7 @@
 pub mod prelude {
     pub use crate::{
         condition::{
-            Condition,
-            builtin::FuncCondition,
+            Condition, IntoCondition,
             relationship::{
                 ConditionOf, ConditionSpawner, ConditionSpawnerCommands, Conditions,
                 IntoConditionBundle, conditions,
