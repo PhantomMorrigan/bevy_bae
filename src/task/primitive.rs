@@ -4,13 +4,14 @@ use bevy_ecs::system::SystemId;
 use bevy_ecs::{lifecycle::HookContext, world::DeferredWorld};
 
 use crate::prelude::*;
-use crate::task::BaeTask;
+use crate::task::{BaeTask, validation::BaeTaskPresent};
 
 pub type OperatorId = SystemId<In<Entity>, TaskStatus>;
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 #[component(on_insert = Self::on_insert_hook, on_replace = Self::on_replace_hook)]
+#[require(BaeTaskPresent)]
 pub struct Operator {
     #[reflect(ignore)]
     register_system: Option<Box<dyn FnOnce(&mut Commands) -> OperatorId + Send + Sync>>,

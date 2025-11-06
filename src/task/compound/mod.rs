@@ -5,14 +5,20 @@ use disqualified::ShortName;
 
 use crate::{
     prelude::*,
-    task::{BaeTask, primitive::OperatorId},
+    task::{
+        BaeTask,
+        primitive::OperatorId,
+        validation::{
+            BaeTaskPresent, insert_bae_task_present_on_add, remove_bae_task_present_on_remove,
+        },
+    },
 };
 
 pub mod relationship;
 pub mod select;
 pub mod sequence;
 
-pub trait CompoundTask: Component + BaeTask {
+pub trait CompoundTask: Component {
     fn decompose(
         entity: Entity,
         world: &World,
@@ -56,6 +62,10 @@ impl CompoundAppExt for App {
     fn add_compound_task<C: CompoundTask>(&mut self) -> &mut Self {
         self.add_observer(insert_type_erased_task::<C>)
             .add_observer(remove_type_erased_task::<C>)
+            .add_observer(insert_bae_task_present_on_add::<C>)
+            .add_observer(remove_bae_task_present_on_remove::<C>);
+        let _ = self.try_register_required_components::<C, BaeTaskPresent>();
+        self
     }
 }
 

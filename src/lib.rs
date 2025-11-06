@@ -38,7 +38,13 @@ extern crate alloc;
 
 use bevy_ecs::{intern::Interned, schedule::ScheduleLabel};
 
-use crate::prelude::*;
+use crate::{
+    prelude::*,
+    task::{
+        compound::CompoundAppExt,
+        validation::{insert_bae_task_present_on_add, remove_bae_task_present_on_remove},
+    },
+};
 
 pub mod condition;
 pub mod effect;
@@ -62,6 +68,10 @@ impl Plugin for BaePlugin {
         app.configure_sets(self.schedule, (BaeSystems::RunTaskSystems,).chain());
         app.world_mut().register_component::<Condition>();
         app.world_mut().register_component::<Effect>();
+        app.add_observer(insert_bae_task_present_on_add::<Operator>)
+            .add_observer(remove_bae_task_present_on_remove::<Operator>);
+        app.add_compound_task::<Select>()
+            .add_compound_task::<Sequence>();
     }
 }
 
