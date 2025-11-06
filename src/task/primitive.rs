@@ -61,7 +61,7 @@ impl Operator {
 }
 
 impl Debug for Operator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Operator")
             .field("register_system", &"<callback>")
             .field("system_id", &self.system_id)

@@ -2,11 +2,7 @@ use crate::prelude::*;
 use crate::task::BaeTask;
 use alloc::slice;
 use bevy_ecs::relationship::{RelatedSpawner, RelatedSpawnerCommands};
-use core::{
-    fmt::{self, Debug, Formatter},
-    iter::Copied,
-    marker::PhantomData,
-};
+use core::{fmt::Debug, iter::Copied};
 
 #[derive(Component, Deref, Reflect, Debug, PartialEq, Eq, Clone)]
 #[relationship(relationship_target = BaeTasks)]

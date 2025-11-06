@@ -1,5 +1,5 @@
+use alloc::collections::VecDeque;
 use core::any::TypeId;
-use std::collections::VecDeque;
 
 use disqualified::ShortName;
 

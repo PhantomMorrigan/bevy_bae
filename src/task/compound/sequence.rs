@@ -12,7 +12,7 @@ impl CompoundTask for Sequence {
         entity: Entity,
         world: &World,
         props: &mut Props,
-        tasks: &mut std::collections::VecDeque<OperatorId>,
+        tasks: &mut alloc::collections::VecDeque<OperatorId>,
     ) {
         let mut children = world.try_query::<&Children>().unwrap();
         let mut conditions = world.try_query::<&Condition>().unwrap();

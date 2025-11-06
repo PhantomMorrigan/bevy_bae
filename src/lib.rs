@@ -31,7 +31,7 @@ pub mod prelude {
     pub use bevy_mod_props::{self, Props, Value};
     pub(crate) use {
         crate::value_ext::ValueExt as _, bevy_app::prelude::*, bevy_derive::Deref,
-        bevy_ecs::prelude::*, bevy_reflect::prelude::*, log::warn,
+        bevy_ecs::prelude::*, bevy_reflect::prelude::*,
     };
 }
 extern crate alloc;

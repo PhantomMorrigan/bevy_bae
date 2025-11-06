@@ -1,5 +1,5 @@
 use core::fmt::Debug;
-use std::ops::RangeBounds;
+use core::ops::RangeBounds;
 
 use ustr::Ustr;
 
@@ -91,7 +91,7 @@ impl Condition {
 }
 
 impl Debug for Condition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Condition")
             .field("predicate", &"<callback>")
             .finish()
