@@ -11,42 +11,42 @@ pub mod relationship;
 #[reflect(Component)]
 pub struct Condition {
     #[reflect(ignore, default = "Condition::true_pred")]
-    predicate: Box<dyn Fn(&Props) -> bool + Send + Sync + 'static>,
+    predicate: Box<dyn Fn(&mut Props) -> bool + Send + Sync + 'static>,
 }
 
 impl Condition {
-    pub fn new(predicate: impl Fn(&Props) -> bool + Send + Sync + 'static) -> Self {
+    pub fn new(predicate: impl Fn(&mut Props) -> bool + Send + Sync + 'static) -> Self {
         Self {
             predicate: Box::new(predicate),
         }
     }
 
-    pub fn is_fullfilled(&self, props: &Props) -> bool {
+    pub fn is_fullfilled(&self, props: &mut Props) -> bool {
         (self.predicate)(props)
     }
 
     pub fn eq(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a.eq(b))
+        Self::predicate(name, value, |a, b| a == b)
     }
 
     pub fn ne(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a.ne(b))
+        Self::predicate(name, value, |a, b| a != b)
     }
 
     pub fn gt(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a.num() > b.num())
+        Self::predicate(name, value, |a, b| a > b)
     }
 
     pub fn gte(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a.num() >= b.num())
+        Self::predicate(name, value, |a, b| a >= b)
     }
 
     pub fn lt(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a.num() < b.num())
+        Self::predicate(name, value, |a, b| a < b)
     }
 
     pub fn lte(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
-        Self::predicate(name, value, |a, b| a.num() <= b.num())
+        Self::predicate(name, value, |a, b| a <= b)
     }
 
     pub fn in_range(
@@ -54,12 +54,7 @@ impl Condition {
         range: impl RangeBounds<f32> + Send + Sync + 'static,
     ) -> Self {
         let name = name.into();
-        Self::new(move |props| {
-            let Some(prop) = props.get_value(name) else {
-                return false;
-            };
-            range.contains(&prop.num())
-        })
+        Self::new(move |props| range.contains(props.get_mut::<f32>(name)))
     }
 
     pub fn always_true() -> Self {
@@ -77,15 +72,10 @@ impl Condition {
     ) -> Self {
         let name = name.into();
         let value = value.into();
-        Self::new(move |props| {
-            let Some(prop) = props.get_value(name) else {
-                return false;
-            };
-            predicate(prop, value)
-        })
+        Self::new(move |p: &mut Props| predicate(*p.entry(name).or_default(), value))
     }
 
-    fn true_pred() -> Box<dyn Fn(&Props) -> bool + Send + Sync + 'static> {
+    fn true_pred() -> Box<dyn Fn(&mut Props) -> bool + Send + Sync + 'static> {
         Box::new(|_| true)
     }
 }

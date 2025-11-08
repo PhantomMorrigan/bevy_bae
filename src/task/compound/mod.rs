@@ -24,6 +24,7 @@ pub trait CompoundTask: Component {
         world: &World,
         props: &mut Props,
         tasks: &mut VecDeque<OperatorId>,
+        index: usize,
     );
 }
 
@@ -39,6 +40,7 @@ struct TypeErasedCompoundTask {
         world: &'a World,
         props: &'a mut Props,
         tasks: &'a mut VecDeque<OperatorId>,
+        index: usize,
     ),
 }
 

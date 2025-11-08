@@ -13,7 +13,7 @@ pub mod prelude {
                 EffectOf, EffectSpawner, EffectSpawnerCommands, Effects, IntoEffectBundle, effects,
             },
         },
-        plan::Planner,
+        plan::{Planner, UpdatePlan},
         task::{
             TaskStatus,
             compound::{
@@ -30,8 +30,7 @@ pub mod prelude {
     };
     pub use bevy_mod_props::{self, Props, Value};
     pub(crate) use {
-        crate::value_ext::ValueExt as _, bevy_app::prelude::*, bevy_derive::Deref,
-        bevy_ecs::prelude::*, bevy_reflect::prelude::*,
+        bevy_app::prelude::*, bevy_derive::Deref, bevy_ecs::prelude::*, bevy_reflect::prelude::*,
     };
 }
 extern crate alloc;
@@ -39,6 +38,7 @@ extern crate alloc;
 use bevy_ecs::{intern::Interned, schedule::ScheduleLabel};
 
 use crate::{
+    plan::update_plan,
     prelude::*,
     task::{
         compound::CompoundAppExt,
@@ -72,6 +72,7 @@ impl Plugin for BaePlugin {
             .add_observer(remove_bae_task_present_on_remove::<Operator>);
         app.add_compound_task::<Select>()
             .add_compound_task::<Sequence>();
+        app.add_observer(update_plan);
     }
 }
 

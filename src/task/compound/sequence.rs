@@ -13,6 +13,7 @@ impl CompoundTask for Sequence {
         world: &World,
         props: &mut Props,
         tasks: &mut alloc::collections::VecDeque<OperatorId>,
+        index: usize,
     ) {
         let mut children = world.try_query::<&Children>().unwrap();
         let mut conditions = world.try_query::<&Condition>().unwrap();
@@ -38,7 +39,7 @@ impl CompoundTask for Sequence {
                 tasks.push_back(operator.system_id());
             }
             if let Some(compound) = world.get::<TypeErasedCompoundTask>(child) {
-                (compound.decompose)(child, world, props, tasks);
+                (compound.decompose)(child, world, props, tasks, 0);
             }
             if let Some(effects_relations) = world.get::<Effects>(child) {
                 for effect in effects.iter_many(world, effects_relations) {

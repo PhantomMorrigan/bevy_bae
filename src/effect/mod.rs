@@ -31,51 +31,41 @@ impl Effect {
     pub fn toggle(name: impl Into<Ustr>) -> Self {
         let name = name.into();
 
-        Self::new(move |props| props.set(name, !props.get_value(name).unwrap().bool()))
+        Self::new(move |props| {
+            let val = props.get_mut::<bool>(name);
+            *val = !*val;
+        })
     }
 
-    pub fn inc<T: Into<Value> + Default>(
-        name: impl Into<Ustr>,
-        value: impl Into<Value> + Default,
-    ) -> Self {
-        Self::mutate(name, value, |a, b| Value::Num(a.num() + b.num()))
+    pub fn inc<T: Into<Value>>(name: impl Into<Ustr>, value: impl Into<Value>) -> Self {
+        Self::mutate(name, value, |a, b| *a += b)
     }
 
     pub fn dec<T: Into<Value> + Default>(
         name: impl Into<Ustr>,
         value: impl Into<Value> + Default,
     ) -> Self {
-        Self::mutate(name, value, |a, b| Value::Num(a.num() - b.num()))
+        Self::mutate(name, value, |a, b| *a -= b)
     }
 
     pub fn mul(name: impl Into<Ustr>, value: impl Into<Value> + Default) -> Self {
-        Self::mutate(name, value, |a, b| Value::Num(a.num() * b.num()))
+        Self::mutate(name, value, |a, b| *a *= b)
     }
 
     pub fn div(name: impl Into<Ustr>, value: impl Into<Value> + Default) -> Self {
-        Self::mutate(name, value, |a, b| Value::Num(a.num() / b.num()))
+        Self::mutate(name, value, |a, b| *a /= b)
     }
 
-    pub fn pow(name: impl Into<Ustr>, value: impl Into<Value> + Default) -> Self {
-        Self::mutate(name, value, |a, b| Value::Num(a.num().powf(b.num())))
-    }
-
-    pub fn rem(name: impl Into<Ustr>, value: impl Into<Value> + Default) -> Self {
-        Self::mutate(name, value, |a, b| Value::Num(a.num() % b.num()))
-    }
-
-    pub fn mutate<T: Into<Value> + Default>(
+    pub fn mutate(
         name: impl Into<Ustr>,
-        value: T,
-        mutate: impl Fn(Value, Value) -> Value + Send + Sync + 'static,
+        value: impl Into<Value>,
+        mutate: impl Fn(&mut Value, Value) + Send + Sync + 'static,
     ) -> Self {
         let name = name.into();
         let value = value.into();
         Self::new(move |props| {
-            if props.get_value(name).is_none() {
-                props.set(name, T::default())
-            };
-            props.set(name, mutate(props.get_value(name).unwrap(), value));
+            let prop = props.entry(name).or_default();
+            mutate(prop, value);
         })
     }
 

@@ -10,6 +10,7 @@ impl CompoundTask for Select {
         _world: &World,
         _props: &mut Props,
         _tasks: &mut alloc::collections::VecDeque<OperatorId>,
+        _index: usize,
     ) {
         todo!()
     }
