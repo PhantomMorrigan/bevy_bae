@@ -17,7 +17,7 @@ pub struct Plan(#[reflect(ignore)] pub Vec<OperatorId>);
 pub struct UpdatePlanCommand;
 
 impl EntityCommand for UpdatePlanCommand {
-    fn apply(self, entity_world: EntityWorldMut) -> () {
+    fn apply(self, entity_world: EntityWorldMut) {
         let entity = entity_world.id();
         entity_world
             .into_world_mut()
