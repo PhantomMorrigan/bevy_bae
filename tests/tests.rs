@@ -28,6 +28,54 @@ fn sequence_multi() {
 }
 
 #[test]
+fn sequence_nested_1() {
+    assert_plan(
+        || {
+            (
+                Name::new("root"),
+                tasks!(Sequence[
+                    tasks!(Sequence[operator("a"), operator("b")]),
+                    operator("c")
+                ]),
+            )
+        },
+        vec!["a", "b", "c"],
+    );
+}
+
+#[test]
+fn sequence_nested_2() {
+    assert_plan(
+        || {
+            (
+                Name::new("root"),
+                tasks!(Sequence[
+                    operator("a"),
+                    tasks!(Sequence[operator("b"), operator("c")]),
+                ]),
+            )
+        },
+        vec!["a", "b", "c"],
+    );
+}
+
+#[test]
+fn sequence_nested_3() {
+    assert_plan(
+        || {
+            (
+                Name::new("root"),
+                tasks!(Sequence[
+                    tasks!(Sequence[operator("a"), operator("b")]),
+                    tasks!(Sequence[operator("c"), operator("d")]),
+                ]),
+            )
+        },
+        vec!["a", "b", "c", "d"],
+    );
+}
+
+#[test]
 fn select_single() {
     assert_plan(
         || (Name::new("root"), tasks!(Select[operator("a")])),
@@ -49,6 +97,25 @@ fn select_first() {
 }
 
 #[test]
+fn select_first_conditional() {
+    assert_plan(
+        || {
+            (
+                Name::new("root"),
+                tasks!(Select[
+                    (
+                        conditions![Condition::always_true()],
+                        operator("a")
+                    ),
+                    operator("b")
+                ]),
+            )
+        },
+        vec!["a"],
+    );
+}
+
+#[test]
 fn select_second() {
     assert_plan(
         || {
@@ -60,6 +127,28 @@ fn select_second() {
                         operator("a")
                     ),
                     operator("b")
+                ]),
+            )
+        },
+        vec!["b"],
+    );
+}
+
+#[test]
+fn select_second_conditional() {
+    assert_plan(
+        || {
+            (
+                Name::new("root"),
+                tasks!(Select[
+                    (
+                        conditions![Condition::always_false()],
+                        operator("a")
+                    ),
+                    (
+                        conditions![Condition::always_true()],
+                        operator("b")
+                    ),
                 ]),
             )
         },
