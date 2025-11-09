@@ -4,24 +4,19 @@ pub mod prelude {
         condition::{
             Condition,
             relationship::{
-                ConditionOf, ConditionSpawner, ConditionSpawnerCommands, Conditions,
-                IntoConditionBundle, conditions,
+                ConditionOf, ConditionSpawner, ConditionSpawnerCommands, Conditions, conditions,
             },
         },
         effect::{
             Effect,
-            relationship::{
-                EffectOf, EffectSpawner, EffectSpawnerCommands, Effects, IntoEffectBundle, effects,
-            },
+            relationship::{EffectOf, EffectSpawner, EffectSpawnerCommands, Effects, effects},
         },
         plan::UpdatePlanCommands,
         task::{
             TaskStatus,
             compound::{
                 CompoundTask,
-                relationship::{
-                    IntoTaskBundle, TaskOf, TaskSpawner, TaskSpawnerCommands, Tasks, tasks,
-                },
+                relationship::{TaskOf, TaskSpawner, TaskSpawnerCommands, Tasks, tasks},
                 select::Select,
                 sequence::Sequence,
             },

@@ -1,9 +1,25 @@
 use bevy::{prelude::*, time::TimeUpdateStrategy};
-use bevy_bae::{plan::Plan, prelude::*, task::primitive::OperatorId};
+use bevy_bae::{plan::Plan, prelude::*};
 
 #[test]
 fn single_operator() {
-    assert_plan(|| (Name::new("a"), Operator::noop()), vec!["a"]);
+    assert_plan(|| operator("a"), vec!["a"]);
+}
+
+#[test]
+fn single_sequence() {
+    assert_plan(
+        || (Name::new("a"), tasks!(Sequence[operator("a")])),
+        vec!["a"],
+    );
+}
+
+#[test]
+fn single_select() {
+    assert_plan(
+        || (Name::new("a"), tasks!(Select[operator("a")])),
+        vec!["a"],
+    );
 }
 
 fn assert_plan<T, U>(behavior: T, plan: Vec<&'static str>)
@@ -43,5 +59,9 @@ where
 
     let plan_names = plan.into_iter().map(|n| n.to_string()).collect::<Vec<_>>();
 
-    assert_eq!(actual_plan_names, plan_names);
+    assert_eq!(plan_names, actual_plan_names);
+}
+
+fn operator(name: &str) -> impl Bundle {
+    (Name::new(name.to_string()), Operator::noop())
 }

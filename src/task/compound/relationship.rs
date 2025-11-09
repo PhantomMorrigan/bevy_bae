@@ -49,36 +49,8 @@ pub type TaskSpawnerCommands<'w, T> = RelatedSpawnerCommands<'w, TaskOf<T>>;
 #[macro_export]
 macro_rules! tasks {
     ($compound:ty[$($condition:expr),*$(,)?]) => {
-        ::bevy::prelude::related!($crate::prelude::Tasks<$compound>[$($crate::prelude::IntoTaskBundle::into_task_bundle($condition)),*])
+        ::bevy::prelude::related!($crate::prelude::Tasks<$compound>[$($condition),*])
     };
 }
 
 pub use tasks;
-
-#[diagnostic::on_unimplemented(
-    message = "`tasks!` was not called with a valid task bundle. The last element must be either an `Operator` or a component that implements `CompositeTask`, like `Select` or `Sequence`.",
-    label = "invalid task bundle"
-)]
-pub trait IntoTaskBundle {
-    fn into_task_bundle(self) -> impl Bundle;
-}
-
-impl<B: Task> IntoTaskBundle for B {
-    fn into_task_bundle(self) -> impl Bundle {
-        self
-    }
-}
-
-macro_rules! impl_into_task_bundle {
-    ($($C:ident),*) => {
-        impl<B: Task, $($C: Bundle,)*> IntoTaskBundle for ($($C, )* B,) {
-            #[allow(non_snake_case, reason = "tuple unpack")]
-            fn into_task_bundle(self) -> impl Bundle {
-                let ($($C, )* b,) = self;
-                ($($C, )* b,)
-            }
-        }
-    }
-}
-
-variadics_please::all_tuples!(impl_into_task_bundle, 0, 14, C);

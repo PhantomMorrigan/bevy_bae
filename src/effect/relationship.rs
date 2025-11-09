@@ -30,37 +30,8 @@ pub type EffectSpawnerCommands<'w> = RelatedSpawnerCommands<'w, EffectOf>;
 #[macro_export]
 macro_rules! effects {
     [$($effect:expr),*$(,)?] => {
-        ::bevy::prelude::related!($crate::prelude::Effects[$($crate::prelude::IntoEffectBundle::into_effect_bundle($effect)),*])
+        ::bevy::prelude::related!($crate::prelude::Effects[$($effect),*])
     };
 }
 
 pub use effects;
-
-#[diagnostic::on_unimplemented(
-    message = "`effects!` was not called with a valid relationship bundle. The last element must be an `Effect`.",
-    label = "invalid effect bundle"
-)]
-pub trait IntoEffectBundle {
-    /// Returns a bundle for a binding.
-    fn into_effect_bundle(self) -> impl Bundle;
-}
-
-impl<B: Into<Effect>> IntoEffectBundle for B {
-    fn into_effect_bundle(self) -> impl Bundle {
-        self.into()
-    }
-}
-
-macro_rules! impl_into_effect_bundle {
-    ($($C:ident),*) => {
-        impl<B: Into<Effect>, $($C: Bundle,)*> IntoEffectBundle for ($($C, )* B,) {
-            #[allow(non_snake_case, reason = "tuple unpack")]
-            fn into_effect_bundle(self) -> impl Bundle {
-                let ($($C, )* b,) = self;
-                ($($C, )* b.into(),)
-            }
-        }
-    }
-}
-
-variadics_please::all_tuples!(impl_into_effect_bundle, 0, 14, C);

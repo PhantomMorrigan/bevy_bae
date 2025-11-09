@@ -30,37 +30,8 @@ pub type ConditionSpawnerCommands<'w> = RelatedSpawnerCommands<'w, ConditionOf>;
 #[macro_export]
 macro_rules! conditions {
     [$($condition:expr),*$(,)?] => {
-        ::bevy::prelude::related!($crate::prelude::Conditions[$($crate::prelude::IntoConditionBundle::into_condition_bundle($condition)),*])
+        ::bevy::prelude::related!($crate::prelude::Conditions[$($condition),*])
     };
 }
 
 pub use conditions;
-
-#[diagnostic::on_unimplemented(
-    message = "`conditions!` was not called with a valid condition bundle. The last element must be a `Condition`.",
-    label = "invalid condition bundle"
-)]
-pub trait IntoConditionBundle {
-    /// Returns a bundle for a binding.
-    fn into_condition_bundle(self) -> impl Bundle;
-}
-
-impl<B: Into<Condition>> IntoConditionBundle for B {
-    fn into_condition_bundle(self) -> impl Bundle {
-        self.into()
-    }
-}
-
-macro_rules! impl_into_condition_bundle {
-    ($($C:ident),*) => {
-        impl<B: Into<Condition>, $($C: Bundle,)*> IntoConditionBundle for ($($C, )* B,) {
-            #[allow(non_snake_case, reason = "tuple unpack")]
-            fn into_condition_bundle(self) -> impl Bundle {
-                let ($($C, )* b,) = self;
-                ($($C, )* b.into(),)
-            }
-        }
-    }
-}
-
-variadics_please::all_tuples!(impl_into_condition_bundle, 0, 14, C);
