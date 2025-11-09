@@ -2,12 +2,12 @@ use bevy::{log::LogPlugin, prelude::*, time::TimeUpdateStrategy};
 use bevy_bae::{plan::Plan, prelude::*};
 
 #[test]
-fn single_operator() {
+fn behavior_operator() {
     assert_plan(|| operator("a"), vec!["a"]);
 }
 
 #[test]
-fn single_sequence() {
+fn sequence_single() {
     assert_plan(
         || (Name::new("root"), tasks!(Sequence[operator("a")])),
         vec!["a"],
@@ -15,10 +15,55 @@ fn single_sequence() {
 }
 
 #[test]
-fn single_select() {
+fn sequence_multi() {
+    assert_plan(
+        || {
+            (
+                Name::new("root"),
+                tasks!(Sequence[operator("a"), operator("b")]),
+            )
+        },
+        vec!["a", "b"],
+    );
+}
+
+#[test]
+fn select_single() {
     assert_plan(
         || (Name::new("root"), tasks!(Select[operator("a")])),
         vec!["a"],
+    );
+}
+
+#[test]
+fn select_first() {
+    assert_plan(
+        || {
+            (
+                Name::new("root"),
+                tasks!(Select[operator("a"), operator("b")]),
+            )
+        },
+        vec!["a"],
+    );
+}
+
+#[test]
+fn select_second() {
+    assert_plan(
+        || {
+            (
+                Name::new("root"),
+                tasks!(Select[
+                    (
+                        conditions![Condition::always_false()],
+                        operator("a")
+                    ),
+                    operator("b")
+                ]),
+            )
+        },
+        vec!["b"],
     );
 }
 
@@ -28,13 +73,23 @@ where
     U: Bundle,
 {
     let mut app = App::new();
-    app.add_plugins((MinimalPlugins, LogPlugin::default(), BaePlugin::default()))
-        .insert_resource(TimeUpdateStrategy::ManualDuration(
-            Time::<Fixed>::default().timestep(),
-        ))
-        .add_systems(PreUpdate, move |mut commands: Commands| {
-            commands.spawn(behavior()).update_plan();
-        });
+    app.add_plugins((
+        MinimalPlugins,
+        LogPlugin {
+            filter: format!(
+                "bevy_log=off,bevy_bae=debug,{default}",
+                default = bevy::log::DEFAULT_FILTER
+            ),
+            ..default()
+        },
+        BaePlugin::default(),
+    ))
+    .insert_resource(TimeUpdateStrategy::ManualDuration(
+        Time::<Fixed>::default().timestep(),
+    ))
+    .add_systems(PreUpdate, move |mut commands: Commands| {
+        commands.spawn(behavior()).update_plan();
+    });
     app.finish();
     app.update();
     let actual_plan = app

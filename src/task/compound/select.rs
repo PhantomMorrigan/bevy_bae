@@ -62,8 +62,14 @@ fn decompose_select(
         .collect();
 
     let mut found_anything = false;
-    for (task_entity, task_name, operator, compound_task, condition_relations, effect_relations) in
-        individual_tasks
+    'task: for (
+        task_entity,
+        task_name,
+        operator,
+        compound_task,
+        condition_relations,
+        effect_relations,
+    ) in individual_tasks
     {
         if let Some(condition_relations) = condition_relations {
             for (entity, name, condition) in conditions.iter_many(world, condition_relations.iter())
@@ -78,7 +84,7 @@ fn decompose_select(
                     debug!(
                         "select {sel_name} -> task {task_name} -> condition {name}: skipping due to unfulfilled condition"
                     );
-                    continue;
+                    continue 'task;
                 }
             }
         }
