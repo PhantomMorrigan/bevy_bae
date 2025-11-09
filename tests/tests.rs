@@ -4,28 +4,25 @@ use std::sync::Mutex;
 
 #[test]
 fn behavior_operator() {
-    assert_plan(operator("a"), vec!["a"]);
+    assert_plan(op("a"), vec!["a"]);
 }
 
 #[test]
 fn sequence_single() {
-    assert_plan(tasks!(Sequence[operator("a")]), vec!["a"]);
+    assert_plan(tasks!(Sequence[op("a")]), vec!["a"]);
 }
 
 #[test]
 fn sequence_multi() {
-    assert_plan(
-        tasks!(Sequence[operator("a"), operator("b")]),
-        vec!["a", "b"],
-    );
+    assert_plan(tasks!(Sequence[op("a"), op("b")]), vec!["a", "b"]);
 }
 
 #[test]
 fn sequence_nested_1() {
     assert_plan(
         tasks!(Sequence[
-            tasks!(Sequence[operator("a"), operator("b")]),
-            operator("c")
+            tasks!(Sequence[op("a"), op("b")]),
+            op("c")
         ]),
         vec!["a", "b", "c"],
     );
@@ -35,8 +32,8 @@ fn sequence_nested_1() {
 fn sequence_nested_2() {
     assert_plan(
         tasks!(Sequence[
-            operator("a"),
-            tasks!(Sequence[operator("b"), operator("c")]),
+            op("a"),
+            tasks!(Sequence[op("b"), op("c")]),
         ]),
         vec!["a", "b", "c"],
     );
@@ -46,8 +43,8 @@ fn sequence_nested_2() {
 fn sequence_nested_3() {
     assert_plan(
         tasks!(Sequence[
-            tasks!(Sequence[operator("a"), operator("b")]),
-            tasks!(Sequence[operator("c"), operator("d")]),
+            tasks!(Sequence[op("a"), op("b")]),
+            tasks!(Sequence[op("c"), op("d")]),
         ]),
         vec!["a", "b", "c", "d"],
     );
@@ -55,12 +52,12 @@ fn sequence_nested_3() {
 
 #[test]
 fn select_single() {
-    assert_plan(tasks!(Select[operator("a")]), vec!["a"]);
+    assert_plan(tasks!(Select[op("a")]), vec!["a"]);
 }
 
 #[test]
 fn select_first() {
-    assert_plan(tasks!(Select[operator("a"), operator("b")]), vec!["a"]);
+    assert_plan(tasks!(Select[op("a"), op("b")]), vec!["a"]);
 }
 
 #[test]
@@ -68,10 +65,10 @@ fn select_first_conditional() {
     assert_plan(
         tasks!(Select[
             (
-                condition(true),
-                operator("a")
+                cond(true),
+                op("a")
             ),
-            operator("b")
+            op("b")
         ]),
         vec!["a"],
     );
@@ -82,10 +79,10 @@ fn select_second() {
     assert_plan(
         tasks!(Select[
             (
-                condition(false),
-                operator("a")
+                cond(false),
+                op("a")
             ),
-            operator("b")
+            op("b")
         ]),
         vec!["b"],
     );
@@ -96,12 +93,12 @@ fn select_second_conditional() {
     assert_plan(
         tasks!(Select[
             (
-                condition(false),
-                operator("a")
+                cond(false),
+                op("a")
             ),
             (
-                condition(true),
-                operator("b")
+                cond(true),
+                op("b")
             ),
         ]),
         vec!["b"],
@@ -158,11 +155,13 @@ fn assert_plan(behavior: impl Bundle, plan: Vec<&'static str>) {
     assert_eq!(plan_names, actual_plan_names);
 }
 
-fn operator(name: &str) -> impl Bundle {
+// The following functions are not reflective of real user code and are here to make the test suite more simple to set up.
+
+fn op(name: &str) -> impl Bundle {
     (Name::new(name.to_string()), Operator::noop())
 }
 
-fn condition(val: bool) -> impl Bundle {
+fn cond(val: bool) -> impl Bundle {
     conditions![if val {
         Condition::always_true()
     } else {
