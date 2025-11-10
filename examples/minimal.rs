@@ -1,64 +1,89 @@
-use bevy::prelude::*;
+use bevy::{color::palettes::tailwind, picking::pointer::PointerInteraction, prelude::*};
 use bevy_bae::prelude::*;
 
 fn main() {
-    let _behavior = trunk_thumper_domain();
+    App::new()
+        .add_plugins((DefaultPlugins, MeshPickingPlugin, BaePlugin::default()))
+        .add_systems(Startup, setup)
+        .add_systems(
+            FixedUpdate,
+            update_close_to_cursor.before(BaeSystems::RunTaskSystems),
+        )
+        .run();
 }
 
-fn trunk_thumper_domain() -> impl Bundle {
-    (
-        Name::new("Be Trunk Thumper"),
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    commands.spawn(Camera2d);
+    commands.spawn((
+        Name::new("Background"),
+        Mesh2d(meshes.add(Rectangle::new(10000.0, 10000.0))),
+        MeshMaterial2d(materials.add(Color::from(tailwind::GRAY_200))),
+        Transform::from_xyz(0.0, 0.0, -1.0),
+    ));
+    commands.spawn((
+        Name::new("NPC"),
+        Mesh2d(meshes.add(Triangle2d::new(
+            Vec2::Y * 20.0,
+            Vec2::new(-20.0, -20.0),
+            Vec2::new(20.0, -20.0),
+        ))),
+        MeshMaterial2d(materials.add(Color::from(tailwind::ROSE_500))),
+        Plan::new(),
         Select,
         tasks![
             (
-                Name::new("Fight enemy"),
-                Sequence,
-                tasks![
-                    (
-                        conditions![Condition::eq("can_see_enemy", true)],
-                        Operator::new(navigate_to_enemy),
-                        effects![Effect::set("location", "enemy")],
-                    ),
-                    Operator::new(do_trunk_slam),
-                ],
+                conditions![Condition::eq("close_to_cursor", true)],
+                Operator::new(rotate),
             ),
-            (
-                Name::new("Patrol bridges"),
-                Sequence,
-                tasks![
-                    Operator::new(choose_bridge_to_check),
-                    (
-                        Operator::new(navigate_to_bridge),
-                        effects![Effect::set("location", "bridge")],
-                    ),
-                    Operator::new(check_bridge),
-                ],
-            )
+            Operator::new(follow_cursor),
         ],
-    )
+    ));
 }
 
-fn navigate_to_enemy(_step: In<OperatorInput>) -> TaskStatus {
-    info!("navigating to enemy");
-    TaskStatus::Success
+fn rotate(In(input): In<OperatorInput>, mut transforms: Query<&mut Transform>) -> TaskStatus {
+    let mut npc_transform = transforms.get_mut(input.planner).unwrap();
+    npc_transform.rotate_z(0.1);
+    TaskStatus::Continue
 }
 
-fn do_trunk_slam(_step: In<OperatorInput>) -> TaskStatus {
-    info!("trunk slam");
-    TaskStatus::Success
+fn follow_cursor(
+    In(input): In<OperatorInput>,
+    pointers: Query<&PointerInteraction>,
+    mut transforms: Query<&mut Transform>,
+) -> TaskStatus {
+    let mut npc_transform = transforms.get_mut(input.planner).unwrap();
+    for point in pointers
+        .iter()
+        .filter_map(|interaction| interaction.get_nearest_hit())
+        .filter_map(|(_entity, hit)| hit.position)
+    {
+        let dir = (point - npc_transform.translation).normalize();
+        npc_transform.align(Vec3::NEG_Z, Vec3::NEG_Z, Vec3::Y, dir);
+        npc_transform.translation += dir * 2.5;
+    }
+    TaskStatus::Continue
 }
 
-fn choose_bridge_to_check(_step: In<OperatorInput>) -> TaskStatus {
-    info!("choosing bridge to check");
-    TaskStatus::Success
-}
-
-fn navigate_to_bridge(_step: In<OperatorInput>) -> TaskStatus {
-    info!("navigating to bridge");
-    TaskStatus::Success
-}
-
-fn check_bridge(_step: In<OperatorInput>) -> TaskStatus {
-    info!("checking bridge");
-    TaskStatus::Success
+fn update_close_to_cursor(
+    pointers: Query<&PointerInteraction>,
+    npc: Single<(Entity, &Transform, &mut Props), With<Plan>>,
+    mut commands: Commands,
+) {
+    let (npc, npc_transform, mut props) = npc.into_inner();
+    for point in pointers
+        .iter()
+        .filter_map(|interaction| interaction.get_nearest_hit())
+        .filter_map(|(_entity, hit)| hit.position)
+    {
+        let was_close = *props.get::<bool>("close_to_cursor");
+        let is_close = point.distance_squared(npc_transform.translation) < 10.0 * 10.0;
+        if was_close != is_close {
+            props.set("close_to_cursor", is_close);
+            commands.entity(npc).trigger(UpdatePlan::new);
+        }
+    }
 }

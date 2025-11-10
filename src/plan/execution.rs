@@ -1,5 +1,12 @@
 use crate::prelude::*;
 
+pub(crate) fn update_empty_plans(mut plans: Query<(Entity, &Plan)>, mut commands: Commands) {
+    for (entity, plan) in plans.iter_mut() {
+        if plan.is_empty() {
+            commands.entity(entity).trigger(UpdatePlan::new);
+        }
+    }
+}
 pub(crate) fn execute_plan(
     world: &mut World,
     mut plans: Local<QueryState<(Entity, NameOrEntity, &mut Plan)>>,
