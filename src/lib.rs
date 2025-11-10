@@ -29,7 +29,6 @@ pub mod prelude {
         bevy_derive::Deref,
         bevy_ecs::prelude::*,
         bevy_reflect::prelude::*,
-        bevy_utils::prelude::*,
         log::{debug, error},
     };
 }

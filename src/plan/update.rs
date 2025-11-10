@@ -1,4 +1,4 @@
-use bevy_ecs::error::{DefaultErrorHandler, ErrorContext, HandleError as _};
+use bevy_ecs::error::{DefaultErrorHandler, HandleError as _};
 use bevy_ecs::system::command::run_system_cached_with;
 use bevy_mod_props::PropsExt;
 
@@ -30,7 +30,7 @@ pub(crate) fn update_plan(
     error_handler: Option<Res<DefaultErrorHandler>>,
 ) {
     let entity = update.entity;
-    let error_handler = error_handler.map(|h| h.clone()).unwrap_or_default();
+    let error_handler = error_handler.map(|h| *h).unwrap_or_default();
     commands.queue(
         run_system_cached_with(update_plan_inner, UpdatePlan { entity })
             .handle_error_with(error_handler.0),

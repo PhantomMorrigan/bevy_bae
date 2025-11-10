@@ -1,10 +1,25 @@
 use bevy::{log::LogPlugin, prelude::*, time::TimeUpdateStrategy};
-use bevy_bae::{plan::Plan, prelude::*};
+use bevy_bae::prelude::*;
 use std::sync::Mutex;
 
 #[test]
-fn run_plans_replans_reruns() {
+fn run_plan() {
     let mut app = App::test(op("a"));
+    // plan
+    app.assert_last_opt(None);
+    app.update();
+    // run
+    app.assert_last_opt(Some("a"));
+}
+
+#[test]
+fn run_plans_replans_reruns() {
+    let mut app = App::test(tasks!(
+        Select[
+            (op("a"), cond_is("use_a", true), eff("use_a", false)),
+            op("b")
+        ]
+    ));
     // plan
     app.assert_last_opt(None);
     app.update();
@@ -12,7 +27,7 @@ fn run_plans_replans_reruns() {
     app.assert_last_opt(Some("a"));
     // replan
     app.update();
-    app.assert_last_opt(Some("a"));
+    app.assert_last_opt(Some("b"));
 }
 
 trait TestApp {
@@ -45,6 +60,9 @@ impl TestApp for App {
                 .spawn(behavior.lock().unwrap().take().unwrap())
                 .insert_if_new(Name::new("root"))
                 .trigger(UpdatePlan::new);
+        })
+        .add_systems(PreUpdate, |mut last_opt: ResMut<LastOpt>| {
+            last_opt.0 = None;
         });
         app.finish();
         app.update();

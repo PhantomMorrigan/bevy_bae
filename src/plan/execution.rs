@@ -39,6 +39,7 @@ pub(crate) fn execute_plan(
                 let mut entity = world.entity_mut(entity);
                 let mut props = entity.get_mut::<Props>().unwrap();
                 for effect in step.effects {
+                    debug!("{name}: applied effect");
                     effect.apply(&mut props);
                 }
             }
@@ -46,13 +47,21 @@ pub(crate) fn execute_plan(
                 debug!("{name}: Plan step ongoing.");
             }
             Ok(TaskStatus::Failure) => {
-                error!("{name}: Plan step failed, aborting plan.");
+                debug!("{name}: Plan step failed, aborting plan");
                 world.entity_mut(entity).insert(Plan::default());
             }
             Err(err) => {
-                error!("{name}: failed to execute current plan step: {err}. Aborting plan.");
+                error!("{name}: failed to execute current plan step: {err}. Aborting plan");
                 world.entity_mut(entity).insert(Plan::default());
             }
+        }
+        if world
+            .entity(entity)
+            .get::<Plan>()
+            .is_none_or(|plan| plan.is_empty())
+        {
+            debug!("{name}: Plan is empty, triggering replan.");
+            world.entity_mut(entity).trigger(UpdatePlan::new);
         }
     }
 }
