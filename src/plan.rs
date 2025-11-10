@@ -1,6 +1,8 @@
+use std::sync::Arc;
+
+use bevy_derive::DerefMut;
 use bevy_ecs::error::ErrorContext;
 use bevy_mod_props::PropsExt;
-use bevy_utils::prelude::DebugName;
 
 use crate::prelude::*;
 use crate::task::compound::{DecomposeInput, DecomposeResult, TypeErasedCompoundTask};
@@ -12,9 +14,9 @@ struct UpdatePlan {
     entity: Entity,
 }
 
-#[derive(Component, Clone, Default, PartialEq, Eq, Reflect, Debug)]
+#[derive(Component, Clone, Default, Reflect, Debug, Deref, DerefMut)]
 #[reflect(Component)]
-pub struct Plan(#[reflect(ignore)] pub Vec<OperatorId>);
+pub struct Plan(#[reflect(ignore)] pub Vec<(OperatorId, Vec<Effect>)>);
 
 pub struct UpdatePlanCommand;
 
@@ -54,6 +56,7 @@ fn update_plan(
     update: In<UpdatePlan>,
     world: &mut World,
     mut conditions: Local<QueryState<(Entity, NameOrEntity, &Condition)>>,
+    mut effects: Local<QueryState<(Entity, NameOrEntity, &Effect)>>,
     mut tasks: Local<QueryState<AnyOf<(&Operator, &TypeErasedCompoundTask)>>>,
     mut names: Local<QueryState<NameOrEntity>>,
 ) -> Result {
@@ -92,22 +95,22 @@ fn update_plan(
             "{behav_name}: Called `update_plan` for an entity without any tasks. Ensure it has either an `Operator` or a `CompoundTask` like `Select` or `Sequence`"
         )));
     };
-    let plan = if let Some(operator) = operator {
+    let mut plan = if let Some(operator) = operator {
         // well that was easy: this root has just a single operator
         debug!("behavior {behav_name}: operator");
-        vec![operator.system_id()]
+        Plan(vec![(operator.system_id(), vec![])])
     } else if let Some(compound_task) = task {
         debug!("behavior {behav_name}: compound task");
         let ctx = DecomposeInput {
             world_state,
-            plan: vec![],
+            plan: Plan::default(),
             root,
             compound_task: root,
         };
         let result = world.run_system_with(compound_task.decompose, ctx)?;
         match result {
             DecomposeResult::Success { plan, .. } => plan,
-            DecomposeResult::Failure => Vec::new(),
+            DecomposeResult::Failure => Plan::default(),
             DecomposeResult::Rejection => todo!(),
         }
     } else {
@@ -116,10 +119,20 @@ fn update_plan(
         )
     };
 
-    // No need to apply the effects of the root, as they cannot affect any planning.
-    // But if we ever decided to automatically apply effects to the real props, we should put that here!
+    if !plan.is_empty() {
+        if let Some(effect_relations) = world.get::<Effects>(root) {
+            for (entity, name, effect) in effects.iter_many(world, effect_relations) {
+                let name = name
+                    .name
+                    .map(|n| format!("{entity} ({n})"))
+                    .unwrap_or_else(|| format!("{entity}"));
+                debug!("behavior {behav_name} -> effect {name}: queued");
+                plan.last_mut().unwrap().1.push(effect.clone());
+            }
+        }
+    }
     debug!("behavior {behav_name}: finished with {plan:?}");
 
-    world.entity_mut(root).insert(Plan(plan));
+    world.entity_mut(root).insert(plan);
     Ok(())
 }

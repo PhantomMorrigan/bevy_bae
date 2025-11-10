@@ -4,6 +4,7 @@ use core::any::TypeId;
 use disqualified::ShortName;
 
 use crate::{
+    plan::Plan,
     prelude::*,
     task::{
         primitive::OperatorId,
@@ -28,7 +29,7 @@ pub struct DecomposeInput {
     pub root: Entity,
     pub compound_task: Entity,
     pub world_state: Props,
-    pub plan: Vec<OperatorId>,
+    pub plan: Plan,
 }
 
 #[derive(Component, Clone)]
@@ -52,10 +53,7 @@ impl TypeErasedCompoundTask {
 }
 
 pub enum DecomposeResult {
-    Success {
-        plan: Vec<OperatorId>,
-        world_state: Props,
-    },
+    Success { plan: Plan, world_state: Props },
     Rejection,
     Failure,
 }

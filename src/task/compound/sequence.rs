@@ -85,7 +85,7 @@ fn decompose_sequence(
         }
         if let Some(operator) = operator {
             debug!("sequence {seq_name} -> task {task_name}: operator");
-            ctx.plan.push(operator.system_id());
+            ctx.plan.push((operator.system_id(), vec![]));
         } else if let Some(compound_task) = compound_task {
             debug!("sequence {seq_name} -> task {task_name}: compound");
             match world.run_system_with(
@@ -108,6 +108,9 @@ fn decompose_sequence(
         } else {
             unreachable!()
         }
+        if ctx.plan.is_empty() {
+            return DecomposeResult::Failure;
+        }
         if let Some(effect_relations) = effect_relations {
             for (entity, name, effect) in effects.iter_many(world, effect_relations.iter()) {
                 let name = name
@@ -115,7 +118,8 @@ fn decompose_sequence(
                     .map(|n| format!("{entity} ({n})"))
                     .unwrap_or_else(|| format!("{entity}"));
                 debug!("sequence {seq_name} -> task {task_name} -> effect {name}: applied");
-                effect.apply(&mut ctx.world_state)
+                effect.apply(&mut ctx.world_state);
+                ctx.plan.last_mut().unwrap().1.push(effect.clone());
             }
         }
         found_anything = true

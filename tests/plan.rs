@@ -83,6 +83,28 @@ fn sequence_nested_fail() {
 }
 
 #[test]
+fn sequence_disabled_by_effects() {
+    assert_plan(
+        tasks!(Sequence[
+            (op("a"), eff("disabled", true)),
+            (op("b"), cond_is("disabled", false)),
+        ]),
+        vec![],
+    );
+}
+
+#[test]
+fn sequence_enabled_by_effects() {
+    assert_plan(
+        tasks!(Sequence[
+            (op("a"), eff("enabled", true)),
+            (op("b"), cond_is("enabled", true)),
+        ]),
+        vec!["a", "b"],
+    );
+}
+
+#[test]
 fn select_single() {
     assert_plan(tasks!(Select[op("a")]), vec!["a"]);
 }
@@ -175,6 +197,25 @@ fn sequence_and_select() {
     );
 }
 
+#[test]
+fn effect_not_disabled_by_invalid_branch() {
+    assert_plan(
+        tasks!(Select[
+            tasks!(Sequence[
+                (op("a"), eff("disabled", true)),
+                (cond(false), op("b"))
+            ]),
+            tasks!(Select[
+                (cond(false),op("c")),
+                tasks!(Sequence[
+                    (cond_is("disabled", false), op("d")),
+                    op("e")
+                ])]),
+        ]),
+        vec!["d", "e"],
+    );
+}
+
 #[track_caller]
 fn assert_plan(behavior: impl Bundle, plan: Vec<&'static str>) {
     let mut app = App::new();
@@ -213,7 +254,7 @@ fn assert_plan(behavior: impl Bundle, plan: Vec<&'static str>) {
     let actual_plan_names = actual_plan
         .0
         .into_iter()
-        .map(|op_to_search| {
+        .map(|(op_to_search, _effects)| {
             operators
                 .iter(app.world())
                 .find_map(|(op, name)| (op.system_id() == op_to_search).then(|| name.to_string()))
@@ -238,4 +279,12 @@ fn cond(val: bool) -> impl Bundle {
     } else {
         Condition::always_false()
     }]
+}
+
+fn cond_is(name: &str, val: impl Into<Value>) -> impl Bundle {
+    conditions![Condition::eq(name, val)]
+}
+
+fn eff(name: &str, val: impl Into<Value>) -> impl Bundle {
+    effects![Effect::set(name, val)]
 }

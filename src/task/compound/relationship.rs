@@ -39,7 +39,7 @@ pub type TaskSpawnerCommands<'w, T> = RelatedSpawnerCommands<'w, TaskOf<T>>;
 
 #[macro_export]
 macro_rules! tasks {
-    ($compound:ty[$($condition:expr),*$(,)?]) => {
+    ($compound:ty[$($condition:expr),* $(,)?]) => {
         ::bevy::prelude::related!($crate::prelude::Tasks<$compound>[$($condition),*])
     };
 }

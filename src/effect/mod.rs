@@ -1,20 +1,21 @@
 use crate::prelude::*;
 use core::fmt::Debug;
+use std::sync::Arc;
 use ustr::Ustr;
 
 pub mod relationship;
 
-#[derive(Component, Reflect)]
+#[derive(Component, Clone, Reflect)]
 #[reflect(Component)]
 pub struct Effect {
     #[reflect(ignore, default = "Effect::noop")]
-    effect: Box<dyn Fn(&mut Props) + Send + Sync + 'static>,
+    effect: Arc<dyn Fn(&mut Props) + Send + Sync + 'static>,
 }
 
 impl Effect {
     pub fn new(predicate: impl Fn(&mut Props) + Send + Sync + 'static) -> Self {
         Self {
-            effect: Box::new(predicate),
+            effect: Arc::new(predicate),
         }
     }
 
@@ -69,8 +70,8 @@ impl Effect {
         })
     }
 
-    fn noop() -> Box<dyn Fn(&mut Props) + Send + Sync + 'static> {
-        Box::new(|_| {})
+    fn noop() -> Arc<dyn Fn(&mut Props) + Send + Sync + 'static> {
+        Arc::new(|_| {})
     }
 }
 
