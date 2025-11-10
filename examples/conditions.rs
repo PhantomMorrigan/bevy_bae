@@ -51,6 +51,6 @@ fn update_state(press: On<Pointer<Press>>, mut props: Single<&mut Props, With<Pl
                 props.set("greet_mode", "ending")
             }
         }
-        _ => return,
-    };
+        _ => (),
+    }
 }
