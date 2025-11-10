@@ -3,29 +3,39 @@ use bevy_bae::prelude::*;
 use std::sync::Mutex;
 
 #[test]
-fn run_plan() {
+fn runs_plan() {
     let mut app = App::test(op("a"));
-    // plan
-    app.assert_last_opt(None);
     app.update();
-    // run
     app.assert_last_opt(Some("a"));
 }
 
 #[test]
-fn run_plans_replans_reruns() {
+fn runs_plan_with_condition() {
     let mut app = App::test(tasks!(
         Select[
-            (op("a"), cond_is("use_a", true), eff("use_a", false)),
+            (op("a"), cond_is("use_a", true)),
+            op("b")
+        ]
+    ));
+    app.update();
+    app.assert_last_opt(Some("b"));
+}
+
+#[test]
+fn runs_plan_then_replans_with_new_effects() {
+    let mut app = App::test(tasks!(
+        Select[
+            (op("a"), cond_is("use_b", false), eff("use_b", true)),
             op("b")
         ]
     ));
     // plan
-    app.assert_last_opt(None);
     app.update();
-    // run
     app.assert_last_opt(Some("a"));
     // replan
+    app.update();
+    app.assert_last_opt(Some("b"));
+    // replan to same plan
     app.update();
     app.assert_last_opt(Some("b"));
 }
@@ -66,6 +76,7 @@ impl TestApp for App {
         });
         app.finish();
         app.update();
+        app.assert_last_opt(None);
         app
     }
 
