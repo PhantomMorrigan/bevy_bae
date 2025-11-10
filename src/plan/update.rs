@@ -1,20 +1,15 @@
-use bevy_derive::DerefMut;
 use bevy_ecs::error::ErrorContext;
 use bevy_mod_props::PropsExt;
 
+use crate::plan::PlannedOperator;
 use crate::prelude::*;
 use crate::task::compound::{DecomposeInput, DecomposeResult, TypeErasedCompoundTask};
-use crate::task::primitive::OperatorId;
 
 #[derive(EntityEvent)]
 struct UpdatePlan {
     #[event_target]
     entity: Entity,
 }
-
-#[derive(Component, Clone, Default, Reflect, Debug, Deref, DerefMut)]
-#[reflect(Component)]
-pub struct Plan(#[reflect(ignore)] pub Vec<(OperatorId, Vec<Effect>)>);
 
 pub struct UpdatePlanCommand;
 
@@ -96,7 +91,14 @@ fn update_plan(
     let mut plan = if let Some(operator) = operator {
         // well that was easy: this root has just a single operator
         debug!("behavior {behav_name}: operator");
-        Plan(vec![(operator.system_id(), vec![])])
+        Plan(
+            [PlannedOperator {
+                system: operator.system_id(),
+                entity: root,
+                effects: vec![],
+            }]
+            .into(),
+        )
     } else if let Some(compound_task) = task {
         debug!("behavior {behav_name}: compound task");
         let ctx = DecomposeInput {
@@ -126,7 +128,7 @@ fn update_plan(
                 .map(|n| format!("{entity} ({n})"))
                 .unwrap_or_else(|| format!("{entity}"));
             debug!("behavior {behav_name} -> effect {name}: queued");
-            plan.last_mut().unwrap().1.push(effect.clone());
+            plan.back_mut().unwrap().effects.push(effect.clone());
         }
     }
     debug!("behavior {behav_name}: finished with {plan:?}");

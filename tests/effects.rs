@@ -134,8 +134,9 @@ fn assert_effects(behavior: impl Bundle, props: Vec<Vec<(&'static str, Value)>>)
     let actual_props = actual_plan
         .0
         .into_iter()
-        .map(|(_op_to_search, effects)| {
-            effects
+        .map(|planned_op| {
+            planned_op
+                .effects
                 .into_iter()
                 .map(|effect| {
                     let mut props = Props::new();

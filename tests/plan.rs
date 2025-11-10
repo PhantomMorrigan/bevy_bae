@@ -254,10 +254,12 @@ fn assert_plan(behavior: impl Bundle, plan: Vec<&'static str>) {
     let actual_plan_names = actual_plan
         .0
         .into_iter()
-        .map(|(op_to_search, _effects)| {
+        .map(|planned_op| {
             operators
                 .iter(app.world())
-                .find_map(|(op, name)| (op.system_id() == op_to_search).then(|| name.to_string()))
+                .find_map(|(op, name)| {
+                    (op.system_id() == planned_op.system).then(|| name.to_string())
+                })
                 .unwrap()
         })
         .collect::<Vec<_>>();

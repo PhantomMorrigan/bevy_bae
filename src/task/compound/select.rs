@@ -1,4 +1,5 @@
 use crate::{
+    plan::PlannedOperator,
     prelude::*,
     task::compound::{DecomposeId, DecomposeInput, DecomposeResult, TypeErasedCompoundTask},
 };
@@ -90,7 +91,11 @@ fn decompose_select(
         }
         if let Some(operator) = operator {
             debug!("select {sel_name} -> task {task_name}: operator");
-            ctx.plan.push((operator.system_id(), vec![]));
+            ctx.plan.push_back(PlannedOperator {
+                system: operator.system_id(),
+                entity: task_entity,
+                effects: vec![],
+            });
         } else if let Some(compound_task) = compound_task {
             debug!("select {sel_name} -> task {task_name}: compound");
             match world.run_system_with(
@@ -124,7 +129,7 @@ fn decompose_select(
                     .unwrap_or_else(|| format!("{entity}"));
                 debug!("select {sel_name} -> task {task_name} -> effect {name}: applied");
                 effect.apply(&mut ctx.world_state);
-                ctx.plan.last_mut().unwrap().1.push(effect.clone());
+                ctx.plan.back_mut().unwrap().effects.push(effect.clone());
             }
         }
         // only use the first match
