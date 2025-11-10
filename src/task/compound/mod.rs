@@ -6,11 +6,8 @@ use disqualified::ShortName;
 use crate::{
     plan::Plan,
     prelude::*,
-    task::{
-        primitive::OperatorId,
-        validation::{
-            BaeTaskPresent, insert_bae_task_present_on_add, remove_bae_task_present_on_remove,
-        },
+    task::validation::{
+        BaeTaskPresent, insert_bae_task_present_on_add, remove_bae_task_present_on_remove,
     },
 };
 

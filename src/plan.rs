@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use bevy_derive::DerefMut;
 use bevy_ecs::error::ErrorContext;
 use bevy_mod_props::PropsExt;
@@ -119,16 +117,16 @@ fn update_plan(
         )
     };
 
-    if !plan.is_empty() {
-        if let Some(effect_relations) = world.get::<Effects>(root) {
-            for (entity, name, effect) in effects.iter_many(world, effect_relations) {
-                let name = name
-                    .name
-                    .map(|n| format!("{entity} ({n})"))
-                    .unwrap_or_else(|| format!("{entity}"));
-                debug!("behavior {behav_name} -> effect {name}: queued");
-                plan.last_mut().unwrap().1.push(effect.clone());
-            }
+    if !plan.is_empty()
+        && let Some(effect_relations) = world.get::<Effects>(root)
+    {
+        for (entity, name, effect) in effects.iter_many(world, effect_relations) {
+            let name = name
+                .name
+                .map(|n| format!("{entity} ({n})"))
+                .unwrap_or_else(|| format!("{entity}"));
+            debug!("behavior {behav_name} -> effect {name}: queued");
+            plan.last_mut().unwrap().1.push(effect.clone());
         }
     }
     debug!("behavior {behav_name}: finished with {plan:?}");
