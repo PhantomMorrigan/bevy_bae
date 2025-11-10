@@ -1,5 +1,6 @@
 use core::fmt::Debug;
 use core::ops::RangeBounds;
+use std::sync::Arc;
 
 use ustr::Ustr;
 
@@ -7,17 +8,17 @@ use crate::prelude::*;
 
 pub mod relationship;
 
-#[derive(Component, Reflect)]
+#[derive(Component, Clone, Reflect)]
 #[reflect(Component)]
 pub struct Condition {
     #[reflect(ignore, default = "Condition::true_pred")]
-    predicate: Box<dyn Fn(&mut Props) -> bool + Send + Sync + 'static>,
+    predicate: Arc<dyn Fn(&mut Props) -> bool + Send + Sync + 'static>,
 }
 
 impl Condition {
     pub fn new(predicate: impl Fn(&mut Props) -> bool + Send + Sync + 'static) -> Self {
         Self {
-            predicate: Box::new(predicate),
+            predicate: Arc::new(predicate),
         }
     }
 
@@ -75,8 +76,8 @@ impl Condition {
         Self::new(move |p: &mut Props| predicate(*p.entry(name).or_default(), value))
     }
 
-    fn true_pred() -> Box<dyn Fn(&mut Props) -> bool + Send + Sync + 'static> {
-        Box::new(|_| true)
+    fn true_pred() -> Arc<dyn Fn(&mut Props) -> bool + Send + Sync + 'static> {
+        Arc::new(|_| true)
     }
 }
 

@@ -1,6 +1,7 @@
 use bevy::{log::LogPlugin, prelude::*, time::TimeUpdateStrategy};
 use bevy_bae::prelude::*;
 use bevy_ecs::entity_disabling::Disabled;
+use bevy_mod_props::PropsMutExt;
 use std::sync::Mutex;
 
 #[test]
@@ -39,6 +40,27 @@ fn runs_plan_then_replans_with_new_effects() {
     // replan to same plan
     app.update();
     app.assert_last_opt("b");
+}
+
+#[test]
+fn replans_on_invalid_conditions() {
+    let mut app = App::test(tasks!(Select[
+        tasks!(Sequence[
+            op("a"),
+            (op("b"), cond_is("disabled", false)),
+        ]),
+        op("c"),
+    ]));
+    // plan
+    app.update();
+    app.assert_last_opt("a");
+    app.behavior_entity().props_mut().set("disabled", true);
+    // abort plan
+    app.update();
+    app.assert_last_opt(None);
+    // replan
+    app.update();
+    app.assert_last_opt("c");
 }
 
 #[test]

@@ -3,6 +3,7 @@ use crate::prelude::*;
 pub(crate) fn execute_plan(
     world: &mut World,
     mut plans: Local<QueryState<(Entity, NameOrEntity, &mut Plan)>>,
+    mut conditions: Local<QueryState<&Condition>>,
 ) {
     let plans = plans
         .iter(world)
@@ -17,12 +18,48 @@ pub(crate) fn execute_plan(
         })
         .collect::<Vec<_>>();
     for (entity, name, planned_operator) in plans {
-        debug!("{name}: Executing plan");
-        let input = OperatorInput {
-            planner: entity,
-            operator: planned_operator.entity,
+        if !world.entity_mut(entity).contains::<Props>() {
+            world.entity_mut(entity).insert(Props::default());
+        }
+        debug!("{name}: validating plan");
+        let conditions = {
+            let task_entity = world.entity(planned_operator.entity);
+            task_entity
+                .get::<Conditions>()
+                .iter()
+                .flat_map(|c| {
+                    conditions
+                        .iter_many(world, c.iter())
+                        .map(|c| c.clone())
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
         };
-        let result: Result<TaskStatus, _> = world.run_system_with(planned_operator.system, input);
+        let mut all_conditions_met = true;
+        {
+            let mut entity = world.entity_mut(entity);
+            let mut props = entity.get_mut::<Props>().unwrap();
+            for condition in conditions {
+                if condition.is_fullfilled(&mut props) {
+                    debug!("{name}: Condition met");
+                } else {
+                    debug!("{name}: Condition not met. Aborting plan");
+                    all_conditions_met = false;
+                    break;
+                }
+            }
+        }
+        let result: Result<TaskStatus, _> = if all_conditions_met {
+            debug!("{name}: executing plan step");
+            let input = OperatorInput {
+                planner: entity,
+                operator: planned_operator.entity,
+            };
+            world.run_system_with(planned_operator.system, input)
+        } else {
+            Ok(TaskStatus::Failure)
+        };
+
         match result {
             Ok(TaskStatus::Success) => {
                 debug!("{name}: Plan step completed successfully, moving to next step");
@@ -33,9 +70,6 @@ pub(crate) fn execute_plan(
                     .pop_front()
                     .unwrap();
 
-                if !world.entity_mut(entity).contains::<Props>() {
-                    world.entity_mut(entity).insert(Props::default());
-                }
                 let mut entity = world.entity_mut(entity);
                 let mut props = entity.get_mut::<Props>().unwrap();
                 for effect in step.effects {

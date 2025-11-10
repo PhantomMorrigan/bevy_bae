@@ -41,7 +41,10 @@ use crate::{
     prelude::*,
     task::{
         compound::CompoundAppExt,
-        validation::{insert_bae_task_present_on_add, remove_bae_task_present_on_remove},
+        validation::{
+            assert_conditions_and_effects_are_not_on_compounds, insert_bae_task_present_on_add,
+            remove_bae_task_present_on_remove,
+        },
     },
 };
 
@@ -63,7 +66,10 @@ impl Default for BaePlugin {
 }
 impl Plugin for BaePlugin {
     fn build(&self, app: &mut App) {
-        app.configure_sets(self.schedule, (BaeSystems::RunTaskSystems,).chain());
+        app.configure_sets(
+            self.schedule,
+            (BaeSystems::Validation, BaeSystems::RunTaskSystems).chain(),
+        );
         app.world_mut().register_component::<Condition>();
         app.world_mut().register_component::<Effect>();
         app.add_observer(insert_bae_task_present_on_add::<Operator>)
@@ -73,12 +79,16 @@ impl Plugin for BaePlugin {
         app.add_observer(update_plan);
         app.add_systems(
             self.schedule,
-            execute_plan.in_set(BaeSystems::RunTaskSystems),
+            (
+                assert_conditions_and_effects_are_not_on_compounds.in_set(BaeSystems::Validation),
+                execute_plan.in_set(BaeSystems::RunTaskSystems),
+            ),
         );
     }
 }
 
 #[derive(SystemSet, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum BaeSystems {
+    Validation,
     RunTaskSystems,
 }

@@ -1,6 +1,6 @@
 use bevy_ecs::entity_disabling::Disabled;
 
-use crate::prelude::*;
+use crate::{prelude::*, task::compound::TypeErasedCompoundTask};
 
 #[derive(Component, Debug, Default)]
 pub(crate) struct BaeTaskPresent(bool);
@@ -32,6 +32,22 @@ pub(crate) fn remove_bae_task_present_on_remove<T: Component>(
     commands
         .entity(remove.entity)
         .try_remove::<BaeTaskPresent>();
+}
+
+pub(crate) fn assert_conditions_and_effects_are_not_on_compounds(
+    invalids: Query<(NameOrEntity, AnyOf<(&Conditions, &Effects)>), With<TypeErasedCompoundTask>>,
+) {
+    for (name, (conditions, effects)) in invalids.iter() {
+        let name = name
+            .name
+            .map(|_| format!("{id} ({name})", id = name.entity))
+            .unwrap_or(format!("{id}", id = name.entity));
+        let has_conditions = conditions.is_some();
+        let has_effects = effects.is_some();
+        panic!(
+            "Entity {name}: only `Operator`s are allowed to have conditions or effects, but found conditions={has_conditions} and effects={has_effects} on an entity with a compound component"
+        );
+    }
 }
 
 #[cfg(test)]
