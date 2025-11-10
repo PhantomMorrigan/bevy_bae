@@ -10,13 +10,20 @@ pub mod relationship;
 pub struct Effect {
     #[reflect(ignore, default = "Effect::noop")]
     effect: Arc<dyn Fn(&mut Props) + Send + Sync + 'static>,
+    pub plan_only: bool,
 }
 
 impl Effect {
     pub fn new(predicate: impl Fn(&mut Props) + Send + Sync + 'static) -> Self {
         Self {
             effect: Arc::new(predicate),
+            plan_only: false,
         }
+    }
+
+    pub fn plan_only(mut self) -> Self {
+        self.plan_only = true;
+        self
     }
 
     pub fn apply(&self, props: &mut Props) {

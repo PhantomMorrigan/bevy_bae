@@ -73,8 +73,12 @@ pub(crate) fn execute_plan(
                 let mut entity = world.entity_mut(entity);
                 let mut props = entity.get_mut::<Props>().unwrap();
                 for effect in step.effects {
-                    debug!("{name}: applied effect");
-                    effect.apply(&mut props);
+                    if effect.plan_only {
+                        debug!("{name}: skipped plan-only effect");
+                    } else {
+                        debug!("{name}: applied effect");
+                        effect.apply(&mut props);
+                    }
                 }
             }
             Ok(TaskStatus::Continue) => {

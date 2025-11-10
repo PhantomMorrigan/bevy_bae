@@ -24,6 +24,27 @@ fn runs_plan_with_condition() {
 }
 
 #[test]
+fn skips_plan_only_effect() {
+    let mut app = App::test(tasks!(
+        Sequence[
+            (op("a"), effects![Effect::set("use_b", true).plan_only()]),
+            (op("b"), cond_is("use_b", true)),
+        ]
+    ));
+    // plan
+    app.update();
+    app.assert_last_opt("a");
+
+    // try to run b, but we didn't actually set use_b, so abort plan
+    app.update();
+    app.assert_last_opt(None);
+
+    // replan same plan
+    app.update();
+    app.assert_last_opt("a");
+}
+
+#[test]
 fn runs_plan_then_replans_with_new_effects() {
     let mut app = App::test(tasks!(
         Select[
