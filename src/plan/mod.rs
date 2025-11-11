@@ -2,7 +2,7 @@
 
 use alloc::collections::VecDeque;
 
-use crate::{plan::mtr::Mtr, prelude::*, task::operator::OperatorId};
+use crate::{plan::mtr::Mtr, prelude::*};
 
 pub(crate) mod execution;
 pub mod mtr;

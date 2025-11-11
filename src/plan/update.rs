@@ -95,9 +95,7 @@ fn update_plan_inner(
             })
     else {
         world.entity_mut(root).insert(Plan::default());
-        return Err(BevyError::from(format!(
-            "Called `update_plan` for an entity without any tasks. Ensure it has either an `Operator` or a `CompoundTask` like `Select` or `Sequence`"
-        )));
+        return Err(BevyError::from("Called `update_plan` for an entity without any tasks. Ensure it has either an `Operator` or a `CompoundTask` like `Select` or `Sequence`".to_string()));
     };
     let mut plan = if has_operator {
         // well that was easy: this root has just a single operator
