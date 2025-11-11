@@ -98,7 +98,7 @@ pub(crate) fn execute_plan(
 
                 false
             }
-            Ok(OperatorStatus::Continue) => {
+            Ok(OperatorStatus::Ongoing) => {
                 debug!("{name}: Plan step ongoing.");
                 // Even if the current plan is empty, we still want to continue the execution of the last step!
                 continue;

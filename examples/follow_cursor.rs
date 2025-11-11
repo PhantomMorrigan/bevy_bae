@@ -50,7 +50,7 @@ fn setup(
 fn rotate(In(input): In<OperatorInput>, mut transforms: Query<&mut Transform>) -> OperatorStatus {
     let mut npc_transform = transforms.get_mut(input.planner).unwrap();
     npc_transform.rotate_z(0.1);
-    OperatorStatus::Continue
+    OperatorStatus::Ongoing
 }
 
 fn follow_cursor(
@@ -68,7 +68,7 @@ fn follow_cursor(
         npc_transform.align(Vec3::NEG_Z, Vec3::NEG_Z, Vec3::Y, dir);
         npc_transform.translation += dir * 2.5;
     }
-    OperatorStatus::Continue
+    OperatorStatus::Ongoing
 }
 
 fn update_close_to_cursor(

@@ -4,7 +4,7 @@
 pub mod prelude {
     pub use crate::{
         BaePlugin, BaeSystems,
-        bevy_mod_props::{self, Props, Ustr, Value},
+        bevy_mod_props::{self, PropCommandsExt, Props, PropsExt, PropsMutExt, Ustr, Value},
         condition::{
             Condition,
             relationship::{
