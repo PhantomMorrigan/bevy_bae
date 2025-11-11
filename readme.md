@@ -267,6 +267,8 @@ fn prepare_to_greet(In(_input): In<OperatorInput>) -> OperatorStatus {
 }
 ```
 
+Note that while we require conditions apply effects on operators here, the same can be done with compound tasks.
+
 Let's consider what happens when running our app.
 - First, `Select` will try to plan `greet`, but cannot, as `can_greet` is not set to `true`.
 - Next, `Select` will plan `prepare_to_greet` as a fallback
@@ -322,8 +324,8 @@ I used terminology that I felt was intuitive for a Bevy context. But if you're f
 The cheatsheet for how traditional HTN terminology maps to BAE is
 - Domain: the entity holding the `Plan`, as well as its associated tree of relations.
 - Primitive Task: The entity holding the `Operator` and its optional `Effects` and `Conditions`.
-- Method & Compound task: Combined into the entity holding the `CompoundTask` and associated `Tasks`.
-  Note that in contrast to traditional HTNs, only `Operator`s can have `Condition`s.
+- Method: Combined into the entity holding the `CompoundTask`, associated `Tasks`, and optional `Effects` and `Conditions`.
+- Compound Task: The `Tasks`.
   This was because it's the same as having a `Sequence` of an `Operator::noop` holding a condition, followed by a compound task.
 - Operator: the system referenced by an `Operator`.
 

@@ -48,10 +48,7 @@ use crate::{
     prelude::*,
     task::{
         compound::CompoundAppExt,
-        validation::{
-            assert_conditions_and_effects_are_not_on_compounds, insert_bae_task_present_on_add,
-            remove_bae_task_present_on_remove,
-        },
+        validation::{insert_bae_task_present_on_add, remove_bae_task_present_on_remove},
     },
 };
 
@@ -95,11 +92,7 @@ impl Plugin for BaePlugin {
         app.add_observer(update_plan);
         app.add_systems(
             self.schedule,
-            ((
-                assert_conditions_and_effects_are_not_on_compounds,
-                update_empty_plans,
-                execute_plan,
-            )
+            ((update_empty_plans, execute_plan)
                 .chain()
                 .in_set(BaeSystems::ExecutePlan),),
         );

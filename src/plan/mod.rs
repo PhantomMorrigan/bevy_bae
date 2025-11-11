@@ -44,5 +44,9 @@ pub struct PlannedOperator {
     /// The [`Entity`] of the operator.
     pub entity: Entity,
     /// The [`Effect`]s of the operator to be applied after it completes. Does not include effects that are [`Effect::plan_only`].
+    /// The last operator of a compound task will also inherit effects from higher-up compound tasks.
     pub effects: Vec<Effect>,
+    /// The [`Condition`]s that need to be fulfilled for the operator to be run.
+    /// The first operator of a compound task will also inherit conditions from higher-up compound tasks.
+    pub conditions: Vec<Condition>,
 }

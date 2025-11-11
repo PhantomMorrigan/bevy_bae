@@ -95,6 +95,7 @@ fn decompose_select(
                     );
                     continue 'task;
                 }
+                ctx.conditions.push(condition.clone());
             }
         }
         if let Some(operator) = operator {
@@ -103,6 +104,7 @@ fn decompose_select(
                 system: operator.system_id(),
                 entity: task_entity,
                 effects: vec![],
+                conditions: ctx.conditions.clone(),
             });
         } else if let Some(compound_task) = compound_task {
             debug!("select {sel_name} -> task {task_name}: compound");
@@ -114,6 +116,7 @@ fn decompose_select(
                     world_state: ctx.world_state.clone(),
                     plan: ctx.plan.clone(),
                     previous_mtr: ctx.previous_mtr.clone(),
+                    conditions: ctx.conditions.clone(),
                 },
             ) {
                 Ok(DecomposeResult::Success { plan, world_state }) => {

@@ -69,6 +69,7 @@ fn decompose_sequence(
     for (task_entity, task_name, operator, compound_task, condition_relations, effect_relations) in
         individual_tasks
     {
+        let mut individual_conditions = Vec::new();
         if let Some(condition_relations) = condition_relations {
             for (entity, name, condition) in conditions.iter_many(world, condition_relations.iter())
             {
@@ -86,17 +87,27 @@ fn decompose_sequence(
                     );
                     return DecomposeResult::Failure;
                 }
+                individual_conditions.push(condition.clone());
             }
         }
+        let conditions = if !found_anything {
+            // Only the first "entry" subtask needs to inherit our conditions
+            ctx.conditions.extend(individual_conditions);
+            ctx.conditions.clone()
+        } else {
+            individual_conditions
+        };
         if let Some(operator) = operator {
             debug!("sequence {seq_name} -> task {task_name}: operator");
             ctx.plan.push_back(PlannedOperator {
                 system: operator.system_id(),
                 entity: task_entity,
                 effects: vec![],
+                conditions,
             });
         } else if let Some(compound_task) = compound_task {
             debug!("sequence {seq_name} -> task {task_name}: compound");
+
             match world.run_system_with(
                 compound_task.decompose,
                 DecomposeInput {
@@ -105,6 +116,7 @@ fn decompose_sequence(
                     world_state: ctx.world_state.clone(),
                     plan: ctx.plan.clone(),
                     previous_mtr: ctx.previous_mtr.clone(),
+                    conditions,
                 },
             ) {
                 Ok(DecomposeResult::Success { plan, world_state }) => {

@@ -78,6 +78,7 @@ fn update_plan_inner(
     debug!("behavior {behav_name}: Updating plan");
 
     let mut world_state = world.entity(update.entity).props().clone();
+    let mut initial_conditions = Vec::new();
     if let Some(condition_relations) = world.get::<Conditions>(root) {
         for (entity, name, condition) in conditions.iter_many(world, condition_relations) {
             let name = name
@@ -91,6 +92,7 @@ fn update_plan_inner(
                 world.entity_mut(root).insert(Plan::default());
                 return Ok(());
             }
+            initial_conditions.push(condition.clone());
         }
     }
 
@@ -111,6 +113,7 @@ fn update_plan_inner(
                 system: operator.system_id(),
                 entity: root,
                 effects: vec![],
+                conditions: initial_conditions,
             }]
             .into(),
             mtr: Mtr::default(),
@@ -129,6 +132,7 @@ fn update_plan_inner(
             planner: root,
             compound_task: root,
             previous_mtr: previous_mtr.clone(),
+            conditions: initial_conditions,
         };
         let result = world.run_system_with(compound_task.decompose, ctx)?;
         match result {

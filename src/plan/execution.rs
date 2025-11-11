@@ -18,7 +18,6 @@ pub(crate) fn update_empty_plans(
 pub(crate) fn execute_plan(
     world: &mut World,
     mut plans: Local<QueryState<(Entity, NameOrEntity, &mut Plan)>>,
-    mut conditions: Local<QueryState<&Condition>>,
 ) {
     let plans = plans
         .iter(world)
@@ -37,24 +36,11 @@ pub(crate) fn execute_plan(
             world.entity_mut(entity).insert(Props::default());
         }
         debug!("{name}: validating plan");
-        let conditions = {
-            let task_entity = world.entity(planned_operator.entity);
-            task_entity
-                .get::<Conditions>()
-                .iter()
-                .flat_map(|c| {
-                    conditions
-                        .iter_many(world, c.iter())
-                        .cloned()
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>()
-        };
         let mut all_conditions_met = true;
         {
             let mut entity = world.entity_mut(entity);
             let mut props = entity.get_mut::<Props>().unwrap();
-            for condition in conditions {
+            for condition in planned_operator.conditions {
                 if condition.is_fullfilled(&mut props) {
                     debug!("{name}: Condition met");
                 } else {

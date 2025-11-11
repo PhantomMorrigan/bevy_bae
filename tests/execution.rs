@@ -238,6 +238,130 @@ fn does_not_replan_on_external_prop_change() {
     app.assert_last_opt("a");
 }
 
+#[test]
+fn higher_order_conditions_are_ignored_when_already_in_task() {
+    let mut app = App::test((
+        Select,
+        tasks![
+            (
+                Sequence,
+                cond_is("disabled", false),
+                tasks![op("a"), op("b")]
+            ),
+            op("c")
+        ],
+    ));
+    app.update();
+    app.assert_last_opt("a");
+
+    app.behavior_entity().set_prop("disabled", true);
+
+    app.update();
+    app.assert_last_opt("b");
+}
+
+#[test]
+fn higher_order_conditions_are_respected_when_entering_task() {
+    let mut app = App::test((
+        Select,
+        tasks![
+            (
+                Sequence,
+                cond_is("disabled", false),
+                tasks![op("a"), op("b")]
+            ),
+            op("c")
+        ],
+    ));
+
+    app.behavior_entity().set_prop("disabled", true);
+    app.update();
+    app.assert_last_opt(None);
+    app.update();
+    app.assert_last_opt("c");
+}
+
+#[test]
+fn compound_effects_are_applied() {
+    let mut app = App::test((
+        Select,
+        tasks![
+            (Sequence, tasks![op("a"), op("b")], eff("called", true),),
+            op("c")
+        ],
+    ));
+    app.update();
+    app.assert_last_opt("a");
+
+    assert!(!*app.behavior_entity().get_prop::<bool>("called"));
+
+    app.update();
+    app.assert_last_opt("b");
+
+    assert!(*app.behavior_entity().get_prop::<bool>("called"));
+
+    app.update();
+    app.assert_last_opt("a");
+}
+
+#[test]
+fn nested_compound_effects_are_applied() {
+    let mut app = App::test((
+        Select,
+        eff("called_outer", true),
+        tasks![
+            (
+                Sequence,
+                eff("called_inner", true),
+                tasks![op("a"), op("b")]
+            ),
+            op("c")
+        ],
+    ));
+    app.update();
+    app.assert_last_opt("a");
+
+    assert!(!*app.behavior_entity().get_prop::<bool>("called_outer"));
+    assert!(!*app.behavior_entity().get_prop::<bool>("called_inner"));
+
+    app.update();
+    app.assert_last_opt("b");
+
+    assert!(*app.behavior_entity().get_prop::<bool>("called_outer"));
+    assert!(*app.behavior_entity().get_prop::<bool>("called_inner"));
+
+    app.update();
+    app.assert_last_opt("a");
+}
+
+#[test]
+fn compound_effects_are_not_applied_on_abort() {
+    let mut app = App::test((
+        Select,
+        tasks![
+            (
+                Sequence,
+                eff("called", true),
+                tasks![op("a"), (op("b"), cond_is("disabled", false))]
+            ),
+            op("c")
+        ],
+    ));
+    app.update();
+    app.assert_last_opt("a");
+
+    assert!(!*app.behavior_entity().get_prop::<bool>("called"));
+
+    app.behavior_entity().set_prop("disabled", true);
+    app.update();
+    app.assert_last_opt(None);
+    assert!(!*app.behavior_entity().get_prop::<bool>("called"));
+
+    app.update();
+    app.assert_last_opt("c");
+    assert!(!*app.behavior_entity().get_prop::<bool>("called"));
+}
+
 trait TestApp {
     fn test(behavior: impl Bundle) -> App;
     #[track_caller]
@@ -280,11 +404,11 @@ impl TestApp for App {
     }
 
     #[track_caller]
-    fn assert_last_opt(&self, name: impl Into<Option<&'static str>>) {
-        let name: Option<&'static str> = name.into();
-        let name: Option<String> = name.map(Into::into);
+    fn assert_last_opt(&self, expected: impl Into<Option<&'static str>>) {
+        let expected: Option<&'static str> = expected.into();
+        let expected: Option<String> = expected.map(Into::into);
         let actual = self.world().resource::<LastOpt>().0.clone();
-        assert_eq!(actual, name);
+        assert_eq!(expected, actual);
     }
 
     fn behavior_entity(&mut self) -> EntityWorldMut<'_> {
