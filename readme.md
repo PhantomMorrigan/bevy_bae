@@ -13,7 +13,7 @@ What does Behavior as Entities mean? It means you define the AI's behavior as a 
 use bevy::prelude::*;
 use bevy_bae::prelude::*;
 
-fn spawn_trunk_thumper_the_troll(mut commands: Commands) -> Entity {
+fn spawn_trunk_thumper_the_troll(mut commands: Commands) {
     commands.spawn((
         Name::new("Trunk Thumper, the mightly Troll"),
         Plan::new(),
@@ -296,6 +296,15 @@ fn spawn_npc(mut commands: Commands) {
             ),
         ],
     ));
+}
+
+fn greet(In(_input): In<OperatorInput>) -> OperatorStatus {
+    info!("Oh hai!");
+    OperatorStatus::Success
+}
+
+fn prepare_to_greet(In(_input): In<OperatorInput>) -> OperatorStatus {
+    OperatorStatus::Success
 }
 ```
 

@@ -34,31 +34,3 @@ fn idle(_: In<OperatorInput>, time: Res<Time>, mut timer: Local<Option<Timer>>) 
         OperatorStatus::Ongoing
     }
 }
-
-use bevy::prelude::*;
-use bevy_bae::prelude::*;
-
-fn spawn_npc(mut commands: Commands) {
-    commands.spawn((
-        Plan::new(),
-        Sequence,
-        tasks![
-            (
-                Operator::new(prepare_to_greet),
-                effects![Effect::set("can_greet", true)],
-            ),
-            (
-                conditions![Condition::eq("can_greet", true)],
-                Operator::new(greet)
-            ),
-        ],
-    ));
-}
-fn prepare_to_greet(In(_input): In<OperatorInput>) -> OperatorStatus {
-    OperatorStatus::Success
-}
-
-fn greet(In(_input): In<OperatorInput>) -> OperatorStatus {
-    info!("Oh hai!");
-    OperatorStatus::Success
-}
