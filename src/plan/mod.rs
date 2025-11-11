@@ -80,27 +80,38 @@ pub(crate) fn log_plan(
         names.get(entity).map(|n| n.entity_and_name())
     };
     let plan_name = name(plan_entity)?;
-    info!("logging plan {plan_name}:");
-    info!("- mtr: {}", plan.mtr);
-    info!("- operators left ({}):", plan.operators_left.len());
+    let mut log = String::new();
+    log.push_str(&format!("plan {plan_name}:\n"));
+    log.push_str(&format!("- mtr: {}\n", plan.mtr));
+    log.push_str(&format!(
+        "- operators left ({}):\n",
+        plan.operators_left.len()
+    ));
     for operator in &plan.operators_left {
         let operator_name = name(operator.entity)?;
-        info!("  - {operator_name}:");
-        info!("    - effects ({}):", operator.effects.len());
+        log.push_str(&format!("  - {operator_name}:\n"));
+        log.push_str(&format!("    - effects ({}):\n", operator.effects.len()));
         for effect in &operator.effects {
             let effect_name = name(*effect)?;
-            info!("      - {effect_name}");
+            log.push_str(&format!("      - {effect_name}\n"));
         }
-        info!("    - conditions ({}):", operator.conditions.len());
+        log.push_str(&format!(
+            "    - conditions ({}):\n",
+            operator.conditions.len()
+        ));
         for condition in &operator.conditions {
             let condition_name = name(*condition)?;
-            info!("      - {condition_name}");
+            log.push_str(&format!("      - {condition_name}\n"));
         }
     }
-    info!("- total operators ({})", plan.operators_total.len());
+    log.push_str(&format!(
+        "- total operators ({})\n",
+        plan.operators_total.len()
+    ));
     for operator in &plan.operators_total {
         let operator_name = name(*operator)?;
-        info!("  - {operator_name}");
+        log.push_str(&format!("  - {operator_name}\n"));
     }
+    info!("{}", log.trim());
     Ok(())
 }
