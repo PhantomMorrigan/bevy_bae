@@ -43,7 +43,7 @@ pub use bevy_mod_props::Ustr;
 use crate::{
     plan::{
         execution::{execute_plan, update_empty_plans},
-        update::{update_plan, update_plans_when_props_changed},
+        update::update_plan,
     },
     prelude::*,
     task::{
@@ -97,7 +97,6 @@ impl Plugin for BaePlugin {
             self.schedule,
             ((
                 assert_conditions_and_effects_are_not_on_compounds,
-                update_plans_when_props_changed,
                 update_empty_plans,
                 execute_plan,
             )

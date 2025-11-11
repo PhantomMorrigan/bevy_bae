@@ -209,7 +209,7 @@ fn does_not_replan_on_internal_prop_change() {
 }
 
 #[test]
-fn replans_on_external_prop_change() {
+fn does_not_replan_on_external_prop_change() {
     let mut app = App::test((
         Select,
         tasks![
@@ -224,6 +224,9 @@ fn replans_on_external_prop_change() {
     app.assert_last_opt("c");
 
     app.behavior_entity().set_prop("enabled", true);
+
+    app.update();
+    app.assert_last_opt("d");
 
     app.update();
     app.assert_last_opt("a");

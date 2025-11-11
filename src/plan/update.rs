@@ -60,15 +60,6 @@ pub(crate) fn update_plan(
     );
 }
 
-pub(crate) fn update_plans_when_props_changed(
-    plans: Query<Entity, (With<Plan>, Changed<Props>)>,
-    mut commands: Commands,
-) {
-    for entity in plans.iter() {
-        commands.entity(entity).trigger(UpdatePlan::new);
-    }
-}
-
 fn update_plan_inner(
     update: In<UpdatePlan>,
     world: &mut World,
