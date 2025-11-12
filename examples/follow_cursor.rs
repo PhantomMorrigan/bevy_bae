@@ -48,7 +48,7 @@ fn setup(
 }
 
 fn rotate(In(input): In<OperatorInput>, mut transforms: Query<&mut Transform>) -> OperatorStatus {
-    let mut npc_transform = transforms.get_mut(input.planner).unwrap();
+    let mut npc_transform = transforms.get_mut(input.entity).unwrap();
     npc_transform.rotate_z(0.1);
     OperatorStatus::Ongoing
 }
@@ -58,7 +58,7 @@ fn follow_cursor(
     pointers: Query<&PointerInteraction>,
     mut transforms: Query<&mut Transform>,
 ) -> OperatorStatus {
-    let mut npc_transform = transforms.get_mut(input.planner).unwrap();
+    let mut npc_transform = transforms.get_mut(input.entity).unwrap();
     for point in pointers
         .iter()
         .filter_map(|interaction| interaction.get_nearest_hit())

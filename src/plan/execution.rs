@@ -65,7 +65,7 @@ pub(crate) fn execute_plan(
         }
         let result: Result<OperatorStatus, _> = if all_conditions_met {
             let input = OperatorInput {
-                planner: plan_entity,
+                entity: plan_entity,
                 operator: planned_operator.entity,
             };
             if let Ok((op_name, operator)) = operators.get(world, planned_operator.entity) {

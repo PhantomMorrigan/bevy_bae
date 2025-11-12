@@ -97,7 +97,7 @@ impl Operator {
 /// Inputs for an operator.
 pub struct OperatorInput {
     /// The entity up the hierarchy that holds the [`Plan`]. This is usually your entity of interest.
-    pub planner: Entity,
+    pub entity: Entity,
     /// The entity that represents the operator itself. Useful if you want to associate custom extra data with an operator.
     pub operator: Entity,
 }
