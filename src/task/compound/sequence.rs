@@ -104,6 +104,7 @@ fn decompose_sequence(
                 Ok(DecomposeResult::Rejection) => return DecomposeResult::Rejection,
                 Ok(DecomposeResult::Failure) | Err(_) => return DecomposeResult::Failure,
             }
+            world.flush();
         } else {
             unreachable!()
         }

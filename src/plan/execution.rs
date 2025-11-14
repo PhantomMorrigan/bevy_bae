@@ -88,6 +88,8 @@ pub(crate) fn execute_plan(
             Ok(OperatorStatus::Failure)
         };
 
+        world.flush();
+
         let force_replan = match result {
             Ok(OperatorStatus::Success) => {
                 debug!(

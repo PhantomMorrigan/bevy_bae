@@ -102,6 +102,7 @@ fn decompose_select(
                 Ok(DecomposeResult::Rejection) => return DecomposeResult::Rejection,
                 Ok(DecomposeResult::Failure) | Err(_) => continue,
             }
+            world.flush();
         } else {
             unreachable!()
         }
