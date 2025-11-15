@@ -124,6 +124,8 @@ fn update_plan_inner(
             conditions: initial_conditions,
         };
         let result = world.run_system_with(compound_task.decompose, ctx)?;
+        world.flush();
+
         match result {
             DecomposeResult::Success { plan, .. } => {
                 if previous_mtr == plan.mtr

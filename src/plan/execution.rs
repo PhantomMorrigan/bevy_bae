@@ -76,7 +76,9 @@ pub(crate) fn execute_plan(
                     operator_name=?op_name.name,
                     "running operator"
                 );
-                world.run_system_with(operator.system_id(), input)
+                let result = world.run_system_with(operator.system_id(), input);
+                world.flush();
+                result
             } else {
                 debug!(
                     operator_entity=?planned_operator.entity,

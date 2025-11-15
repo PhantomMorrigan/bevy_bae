@@ -84,7 +84,7 @@ fn decompose_select(
                 conditions: ctx.conditions.clone(),
             });
         } else if let Some(compound_task) = compound_task {
-            match world.run_system_with(
+            let result = world.run_system_with(
                 compound_task.decompose,
                 DecomposeInput {
                     planner: ctx.planner,
@@ -94,7 +94,9 @@ fn decompose_select(
                     previous_mtr: ctx.previous_mtr.clone(),
                     conditions: ctx.conditions.clone(),
                 },
-            ) {
+            );
+            world.flush();
+            match result {
                 Ok(DecomposeResult::Success { plan, world_state }) => {
                     ctx.plan = plan;
                     ctx.world_state = world_state;
