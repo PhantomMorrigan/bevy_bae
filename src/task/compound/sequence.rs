@@ -1,7 +1,7 @@
 //! Contains the [`Sequence`] [`CompoundTask`]
 
 use crate::{
-    plan::PlannedOperator,
+    plan::TaskNode,
     prelude::*,
     task::compound::{DecomposeId, DecomposeInput, DecomposeResult, TypeErasedCompoundTask},
 };
@@ -80,11 +80,14 @@ fn decompose_sequence(
             individual_conditions
         };
         if has_operator {
-            ctx.plan.push_back(PlannedOperator {
+            let index = ctx.plan.add_node(TaskNode {
                 entity: task_entity,
+                composite: false,
                 effects: vec![],
                 conditions,
             });
+
+            ctx.plan.push_back(index);
         } else if let Some(compound_task) = compound_task {
             let result = world.run_system_with(
                 compound_task.decompose,
@@ -115,7 +118,8 @@ fn decompose_sequence(
         if let Some(effect_relations) = effect_relations {
             for (entity, effect) in effects.iter_many(world, effect_relations.iter()) {
                 effect.apply(&mut ctx.world_state);
-                ctx.plan.back_mut().unwrap().effects.push(entity);
+                let idx = *ctx.plan.back().unwrap();
+                ctx.plan.nodes[idx].effects.push(entity);
             }
         }
         found_anything = true;

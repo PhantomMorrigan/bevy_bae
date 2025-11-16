@@ -15,12 +15,14 @@ pub mod update;
 #[reflect(Component)]
 #[require(Props)]
 pub struct Plan {
-    /// The queue of planned [`Operator`]s to execute. This will get [`VecDeque::pop_front`]ed during plan execution.
+    /// The queue of planned [`TaskNodes`]s to execute. This will get [`VecDeque::pop_front`]ed during plan execution.
     #[reflect(ignore)]
     #[deref]
-    pub operators_left: VecDeque<PlannedOperator>,
-    /// All [`Operator`]s that were in [`Plan::operators_left`] when the plan was created.
-    pub operators_total: Vec<Entity>,
+    pub operators_left: VecDeque<usize>,
+    /// Currently executing tasks.
+    pub track: Vec<usize>,
+    /// All [`Operator`]s that were in [`Plan::operators_left`] when the plan was createdk
+    pub nodes: Vec<TaskNode>,
     /// The [`Mtr`] of the full plan when it was created.
     pub mtr: Mtr,
 }
@@ -35,14 +37,20 @@ impl Plan {
     pub fn clear(&mut self) {
         *self = Self::new();
     }
+
+    pub(crate) fn add_node(&mut self, node: TaskNode) -> usize {
+        self.nodes.push(node);
+        self.nodes.len() - 1
+    }
 }
 
 /// An entry in [`Plan::operators_left`], representing an operator that is either currently executing or waiting to execute.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct PlannedOperator {
+#[derive(Clone, Debug, PartialEq, Eq, Reflect)]
+pub struct TaskNode {
     /// The [`Entity`] of the [`Operator`].
     pub entity: Entity,
-    /// The [`Effect`]s of the operator to be applied after it completes. Does not include effects that are [`Effect::plan_only`].
+    /// Whenever or not this has an associated [`Operator`]
+    pub composite: bool,
     /// The last operator of a compound task will also inherit effects from higher-up compound tasks.
     pub effects: Vec<Entity>,
     /// The [`Condition`]s that need to be fulfilled for the operator to be run.
@@ -87,7 +95,7 @@ pub(crate) fn log_plan(
         "- operators left ({}):\n",
         plan.operators_left.len()
     ));
-    for operator in &plan.operators_left {
+    for operator in plan.operators_left.iter().map(|i| &plan.nodes[*i]) {
         let operator_name = name(operator.entity)?;
         log.push_str(&format!("  - {operator_name}:\n"));
         log.push_str(&format!("    - effects ({}):\n", operator.effects.len()));
@@ -104,12 +112,9 @@ pub(crate) fn log_plan(
             log.push_str(&format!("      - {condition_name}\n"));
         }
     }
-    log.push_str(&format!(
-        "- total operators ({})\n",
-        plan.operators_total.len()
-    ));
-    for operator in &plan.operators_total {
-        let operator_name = name(*operator)?;
+    log.push_str(&format!("- total operators ({})\n", plan.nodes.len()));
+    for operator in &plan.nodes {
+        let operator_name = name(operator.entity)?;
         log.push_str(&format!("  - {operator_name}\n"));
     }
     info!("{}", log.trim());

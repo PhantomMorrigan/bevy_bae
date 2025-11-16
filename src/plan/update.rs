@@ -5,7 +5,7 @@ use bevy_ecs::system::command::run_system_cached_with;
 use bevy_mod_props::PropsExt;
 use core::marker::PhantomData;
 
-use crate::plan::PlannedOperator;
+use crate::plan::TaskNode;
 use crate::plan::mtr::Mtr;
 use crate::prelude::*;
 use crate::task::compound::{DecomposeInput, DecomposeResult, TypeErasedCompoundTask};
@@ -100,14 +100,16 @@ fn update_plan_inner(
     let mut plan = if has_operator {
         // well that was easy: this root has just a single operator
         Plan {
-            operators_left: [PlannedOperator {
+            operators_left: [0].into(),
+            nodes: [TaskNode {
                 entity,
                 effects: vec![],
                 conditions: initial_conditions,
+                composite: false,
             }]
             .into(),
             mtr: Mtr::default(),
-            operators_total: Vec::new(),
+            track: vec![],
         }
     } else if let Some(compound_task) = compound_task {
         let previous_mtr = if let Some(plan) = world.entity(root).get::<Plan>() {
@@ -130,12 +132,12 @@ fn update_plan_inner(
             DecomposeResult::Success { plan, .. } => {
                 if previous_mtr == plan.mtr
                     && world.entity(root).get::<Plan>().is_some_and(|prev_plan| {
-                        prev_plan.operators_total.len() == plan.operators_left.len()
+                        prev_plan.nodes.len() == plan.nodes.len()
                             && prev_plan
-                                .operators_total
+                                .nodes
                                 .iter()
-                                .zip(plan.operators_left.iter())
-                                .all(|(a, b)| *a == b.entity)
+                                .zip(plan.nodes.iter())
+                                .all(|(a, b)| a.entity == b.entity)
                     })
                 {
                     // We found the same plan we are already running. Just keep that one.
@@ -156,16 +158,10 @@ fn update_plan_inner(
         && let Some(effect_relations) = world.get::<Effects>(root)
     {
         for effect in effects.iter_many(world, effect_relations) {
-            plan.back_mut().unwrap().effects.push(effect);
+            let idx = *plan.back().unwrap();
+            plan.nodes[idx].effects.push(effect);
         }
     }
-
-    let op_entities = plan
-        .operators_left
-        .iter()
-        .map(|op| op.entity)
-        .collect::<Vec<_>>();
-    plan.operators_total = op_entities;
 
     let old_plan = world
         .entity(root)

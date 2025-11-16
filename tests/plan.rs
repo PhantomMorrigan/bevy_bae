@@ -255,7 +255,9 @@ fn assert_plan(behavior: impl Bundle, plan: Vec<&'static str>) {
         .map(|planned_op| {
             operators
                 .iter(app.world())
-                .find_map(|(op, name)| (op == planned_op.entity).then(|| name.to_string()))
+                .find_map(|(op, name)| {
+                    (op == actual_plan.nodes[planned_op].entity).then(|| name.to_string())
+                })
                 .unwrap()
         })
         .collect::<Vec<_>>();

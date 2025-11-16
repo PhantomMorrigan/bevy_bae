@@ -1,4 +1,4 @@
-use crate::{plan::PlannedOperator, prelude::*};
+use crate::{plan::TaskNode, prelude::*};
 
 pub(crate) fn update_empty_plans(
     mut plans: Query<(Entity, NameOrEntity, &Plan)>,
@@ -18,15 +18,15 @@ pub(crate) fn execute_plan(
     mut conditions: Local<QueryState<(NameOrEntity, &Condition)>>,
     mut operators: Local<QueryState<(NameOrEntity, &Operator)>>,
     mut effects: Local<QueryState<(NameOrEntity, &Effect)>>,
-    mut plans_scratch: Local<Vec<(Entity, Option<Name>, PlannedOperator)>>,
+    mut plans_scratch: Local<Vec<(Entity, Option<Name>, TaskNode)>>,
     mut condition_scratch: Local<Vec<(Entity, Option<Name>, Condition)>>,
     mut effects_scratch: Local<Vec<(Entity, Option<Name>, Effect)>>,
 ) {
-    plans_scratch.extend(
-        plans.iter(world).filter_map(|(name, plan)| {
-            Some((name.entity, name.name.cloned(), plan.front()?.clone()))
-        }),
-    );
+    plans_scratch.extend(plans.iter(world).filter_map(|(name, plan)| {
+        let idx = *plan.front()?;
+        Some((name.entity, name.name.cloned(), plan.nodes[idx].clone()))
+    }));
+
     for (plan_entity, plan_name, planned_operator) in plans_scratch.drain(..) {
         debug!(?plan_entity, ?plan_name, "checking conditions");
         let mut all_conditions_met = true;
@@ -94,12 +94,13 @@ pub(crate) fn execute_plan(
                     ?plan_name,
                     "operator completed successfully, moving to next step"
                 );
-                let step = world
-                    .entity_mut(plan_entity)
-                    .get_mut::<Plan>()
-                    .unwrap()
-                    .pop_front()
-                    .unwrap();
+
+                let mut plan_mut = world.entity_mut(plan_entity);
+                let mut plan: Mut<Plan> = plan_mut.get_mut::<Plan>().unwrap();
+
+                let idx = plan.pop_front().unwrap();
+
+                let step = plan.nodes[idx].clone();
 
                 effects_scratch.extend(
                     effects
