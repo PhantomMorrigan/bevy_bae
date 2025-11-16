@@ -119,7 +119,6 @@ fn update_plan_inner(
         };
         let ctx = DecomposeInput {
             world_state,
-            plan: Plan::default(),
             planner: root,
             compound_task: root,
             previous_mtr: previous_mtr.clone(),
@@ -129,7 +128,7 @@ fn update_plan_inner(
         world.flush();
 
         match result {
-            DecomposeResult::Success { plan, .. } => {
+            DecomposeResult::Success { sub_plan: plan, .. } => {
                 if previous_mtr == plan.mtr
                     && world.entity(root).get::<Plan>().is_some_and(|prev_plan| {
                         prev_plan.nodes.len() == plan.nodes.len()

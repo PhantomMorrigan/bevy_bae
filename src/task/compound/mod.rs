@@ -31,9 +31,6 @@ pub struct DecomposeInput {
     /// The current [`Props`] associated with this step of the decomposition.
     /// Expected to be mutated during decomposition and returned in [`DecomposeResult`].
     pub world_state: Props,
-    /// The current [`Plan`] associated with this step of the decomposition.
-    /// Expected to be mutated during decomposition and returned in [`DecomposeResult`].
-    pub plan: Plan,
     /// The [`Mtr`] of the previous plan.
     /// Used to determine whether the current decomposition should return [`DecomposeResult::Rejection`] because it has a lower priority than the running task.
     pub previous_mtr: Mtr,
@@ -58,8 +55,8 @@ impl TypeErasedCompoundTask {
 pub enum DecomposeResult {
     /// The decomposition was successful.
     Success {
-        /// A modified copy of [`DecomposeInput::plan`], appended with the decomposition.
-        plan: Plan,
+        /// The plan of this Decompose task.
+        sub_plan: Plan,
         /// A modified copy of [`DecomposeInput::world_state`], updated with the decomposition.
         world_state: Props,
     },

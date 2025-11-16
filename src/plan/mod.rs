@@ -42,6 +42,14 @@ impl Plan {
         self.nodes.push(node);
         self.nodes.len() - 1
     }
+
+    pub(crate) fn merge(&mut self, mut other: Plan) {
+        let len = self.nodes.len();
+        self.nodes.append(&mut other.nodes);
+        for idx in other.operators_left {
+            self.push_back(idx + len);
+        }
+    }
 }
 
 /// An entry in [`Plan::operators_left`], representing an operator that is either currently executing or waiting to execute.
