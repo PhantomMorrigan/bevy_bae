@@ -28,9 +28,6 @@ pub(crate) fn execute_plan(
         }),
     );
     for (plan_entity, plan_name, planned_operator) in plans_scratch.drain(..) {
-        if !world.entity_mut(plan_entity).contains::<Props>() {
-            world.entity_mut(plan_entity).insert(Props::default());
-        }
         debug!(?plan_entity, ?plan_name, "checking conditions");
         let mut all_conditions_met = true;
         {
